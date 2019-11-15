@@ -70,75 +70,84 @@ class KycInfo(models.Model):
     kycstatus = models.IntegerField(null=True)
     username = models.CharField(max_length =100,default=None, null=True)
 
+class country(models.Model):
+    country_code = models.CharField(max_length=30, unique=True)
+    country_name = models.CharField(max_length=100,unique=True)
+    country_phone = models.CharField(max_length=30)
+    created_at = models.DateTimeField(verbose_name='created_at', auto_now_add=True)
+    update_at = models.DateTimeField(verbose_name='updates_at', auto_now=True)
 
 
 class Categories(models.Model):
-    categoryname = models.CharField(max_length=50)
-    categorycode = models.CharField(max_length=60,default =None , null=True,unique=True)
+    category_name = models.CharField(max_length=50)
+    category_code = models.CharField(max_length=60,default =None , null=True,unique=True)
 
 class SubCategory(models.Model):
     category_id = models.IntegerField(default = None)
-    subcategoryname = models.CharField(max_length=60)
-    subcategorycode = models.CharField(max_length=60, default =None , null=True,unique=True)
+    sub_category_name = models.CharField(max_length=60)
+    sub_category_code = models.CharField(max_length=60, default =None , null=True,unique=True)
 
 class Skills(models.Model):
-    category_id = models.IntegerField(default=None)
+    category_id = models.IntegerField(blank=True)
+    sub_category_id = models.IntegerField(blank=True)
     skills = models.CharField(max_length=40)
 
 class Currency(models.Model):
-    currencytype = models.CharField(max_length=30)
-    currencysymbol = models.CharField(max_length=30)
+    currency_type = models.CharField(max_length=30)
+    currency_symbol = models.CharField(max_length=30)
     created_at = models.DateTimeField(verbose_name='created_at', auto_now_add=True)
     update_at = models.DateTimeField(verbose_name='updates_at', auto_now=True)
 
 
 class BudgetType(models.Model):
-    budget_type = models.CharField(max_length=50)
+    budget_type = models.CharField(max_length=50,default = None)
     created_at = models.DateTimeField(verbose_name='created_at', auto_now_add=True)
     update_at = models.DateTimeField(verbose_name='updates_at', auto_now=True)
 
 class Budgets(models.Model):
     budgettype_id = models.IntegerField()
     currency_id = models.IntegerField()
-    min = models.IntegerField()
+    min = models.IntegerField(default =None)
     max = models.IntegerField()
     created_at = models.DateTimeField(verbose_name='created_at', auto_now_add=True)
     update_at = models.DateTimeField(verbose_name='updates_at', auto_now=True)
 
 class PostProject(models.Model):
-    categorycode = models.CharField(max_length=60, unique=True)
-    subcategorycode = models.CharField(max_length=60,   unique=True)
-    projecttitle = models.CharField(max_length=50)
-    projectcode = models.CharField(max_length = 30, default =None , null=True,unique=True)
+    category_id = models.CharField(max_length=60,blank=True)
+    subcategory_id = models.CharField(max_length=60,blank=True)
+    project_title = models.CharField(max_length=50)
+    route = models.CharField(max_length=100,blank =True)
+    project_code = models.CharField(max_length = 30, default =None , null=True,unique=True)
     description = models.CharField(max_length=50)
     files = models.FileField(upload_to='pictures/files/',)
     userid = models.IntegerField(default=None, null=True)
     username = models.CharField(max_length=50,default=None, null=True)
     skills = models.TextField(max_length = 300)
-    budgetTypeId = models.IntegerField( )
-    currencyid = models.IntegerField( )
-
-    custombudget = models.IntegerField()
-    projectdeadline = models.DateField()
-    experiencerequired =models.CharField(max_length= 100)
-    country = models.CharField(max_length= 100)
+    budgetType_Id = models.IntegerField(default=None)
+    currency_id = models.IntegerField(default=None)
+    min = models.IntegerField(null=True)
+    max=models.IntegerField(null=True)
+    custom_budget = models.IntegerField()
+    project_deadline = models.DateField()
+    experience_required =models.CharField(max_length= 100)
+    country_id = models.CharField(max_length= 100)
 
 
 class Userprofile(models.Model):
     name = models.CharField(max_length=30,null=True)
-    userid = models.IntegerField(default=None, null=True)
+    user_id = models.IntegerField(default=None, null=True)
     email = models.EmailField()
     phone = models.BigIntegerField()
     skills = models.TextField()
     profile = models.ImageField(upload_to='pictures/')
-    coverphoto = models.ImageField(upload_to='pictures/')
-    country = models.CharField(max_length=30)
+    cover_photo = models.ImageField(upload_to='pictures/')
+    country_id = models.CharField(max_length=30)
 
 
 class Dashboard(models.Model):
     name = models.CharField(max_length=30)
     username = models.CharField(max_length=30)
-    profilepic = models.ImageField(upload_to='pictures/')
+    profile_pic = models.ImageField(upload_to='pictures/')
     current_ongoing_jobs = models.CharField(max_length=40)
     completed_recent_projects = models.CharField(max_length=40)
     recommended_jobs = models.CharField(max_length=40)

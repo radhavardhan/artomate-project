@@ -82,27 +82,25 @@ class KYCInfoSerializer(serializers.ModelSerializer):
 class PostProjectSerializer(serializers.ModelSerializer):
     class Meta:
         model = PostProject
-        fields = ('id', 'projecttitle', 'description', 'files', 'userid', 'username', 'projectcode', 'skills','categorycode','subcategorycode',
-                 'custombudget', 'projectdeadline', 'experiencerequired', 'country','budgetTypeId','currencyid')
-
-        # extra_kwargs = {'files': { 'required': True, 'multiple': True}}
-
+        fields = ('id', 'project_title', 'description', 'files', 'userid', 'username', 'project_code', 'skills','category_id','subcategory_id',
+                 'custom_budget', 'project_deadline', 'experience_required', 'country_id', 'budgetType_Id', 'currency_id', 'min', 'max')
 
         def save(self):
             project = PostProject(
-                projecttitle=self.validated_data['projecttitle'],
+                project_title=self.validated_data['project_title'],
                 description=self.validated_data['description'],
                 files=self.validated_data['files'],
                 skills=self.validated_data['skills'],
-                currencyid=self.validated_data['currencyid'],
-                budgetTypeId=self.validated_data['budgetTypeId'],
-                categorycode=self.validated_data['categorycode'],
-                subcategorycode=self.validated_data['subcategorycode'],
-                custombudget=self.validated_data['custombudget'],
-                projectdeadline=self.validated_data['projectdeadline'],
-                experiencerequired=self.validated_data['experiencerequired'],
-                country=self.validated_data['country'],
-
+                currency_id=self.validated_data['currencyid'],
+                budgetType_Id=self.validated_data['budgetTypeId'],
+                category_id=self.validated_data['category_id'],
+                subcategory_id=self.validated_data['subcategory_id'],
+                custom_budget=self.validated_data['custombudget'],
+                project_deadline=self.validated_data['projectdeadline'],
+                experience_required=self.validated_data['experiencerequired'],
+                country_id=self.validated_data['country_id'],
+                min=self.validated_data['min'],
+                max=self.validated_data['max'],
             )
             return project
 

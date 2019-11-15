@@ -1,4 +1,4 @@
-from django.http import HttpResponse,JsonResponse,Http404
+from django.http import HttpResponse, JsonResponse, Http404
 from rest_framework import status
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.response import Response
@@ -9,7 +9,6 @@ from django.core.mail import EmailMultiAlternatives
 from django.utils.http import urlsafe_base64_decode
 from django.utils.http import urlsafe_base64_encode
 from django.template.loader import render_to_string
-
 
 from django.contrib.auth.tokens import default_token_generator
 
@@ -26,8 +25,7 @@ from rest_framework.status import (
 )
 from django.contrib.auth import authenticate
 from rest_framework.authtoken.models import Token
-from account.models import KycInfo,Account,Categories,PostProject,Userprofile,SubCategory,Skills
-
+from account.models import KycInfo, Account, Categories, PostProject, Userprofile, SubCategory, Skills, Budgets
 
 from rest_framework.views import APIView
 from django.core.mail import send_mail
@@ -40,12 +38,12 @@ from account.token import account_activation_token
 from django.contrib.auth.models import User
 from django.core.mail import EmailMessage
 
-
-
-from account.api.serializers import RegistrationSerializer, LoginSerializer,KYCInfoSerializer, CategoriesSerializer,PostProjectSerializer,UserProfileSerializer,SubCategorySerializer,SkillsSerializer
+from account.api.serializers import RegistrationSerializer, LoginSerializer, KYCInfoSerializer, CategoriesSerializer, \
+    PostProjectSerializer, UserProfileSerializer, SubCategorySerializer, SkillsSerializer
 
 from random import choice
 from string import ascii_lowercase, digits, hexdigits
+
 
 @api_view(['POST', ])
 def registration_view(request):
@@ -93,24 +91,24 @@ def login(request):
     if not user:
         return Response({'error': 'Invalid Credentials'}, status=HTTP_200_OK)
     token, _ = Token.objects.get_or_create(user=user)
-    postpro = KycInfo.objects.filter(userid =user.id)
+    postpro = KycInfo.objects.filter(userid=user.id)
     if postpro.exists():
         for kyc in postpro:
             if kyc.kycstatus == 1:
-                return Response({'token': token.key,'kyc_message':'kyc details uploaded','kyc_status' : 1},
-                    status=HTTP_200_OK)
+                return Response({'token': token.key, 'kyc_message': 'kyc details uploaded', 'kyc_status': 1},
+                                status=HTTP_200_OK)
             elif kyc.kycstatus == 2:
-                return Response({'token': token.key, 'kyc_message': 'kyc details pending','kyc_status' : 2},
+                return Response({'token': token.key, 'kyc_message': 'kyc details pending', 'kyc_status': 2},
                                 status=HTTP_200_OK)
             elif kyc.kycstatus == 3:
-                    return Response({'token': token.key, 'kyc_message': 'kyc details approved','kyc_status' : 3},
-                                    status=HTTP_200_OK)
+                return Response({'token': token.key, 'kyc_message': 'kyc details approved', 'kyc_status': 3},
+                                status=HTTP_200_OK)
             else:
                 if kyc.kycstatus == 4:
-                        return Response({'token': token.key, 'kyc_message': 'kyc details rejected','kyc_status' : 4},
-                                        status=HTTP_200_OK)
-    return Response({'token': token.key, 'kyc_message': 'kyc details not entered','kyc_status' : 0},
-                                        status=HTTP_200_OK)
+                    return Response({'token': token.key, 'kyc_message': 'kyc details rejected', 'kyc_status': 4},
+                                    status=HTTP_200_OK)
+    return Response({'token': token.key, 'kyc_message': 'kyc details not entered', 'kyc_status': 0},
+                    status=HTTP_200_OK)
 
 
 class DashboardView(APIView):
@@ -124,7 +122,6 @@ class DashboardView(APIView):
         profile = Userprofile.objects.filter(userid=id).values()
         print(profile)
 
-
         data = {
             "username": request.user.username,
             "email": request.user.email
@@ -132,15 +129,14 @@ class DashboardView(APIView):
         return JsonResponse(data)
 
 
-
 class UserProfile(APIView):
     permission_classes = (IsAuthenticated,)
 
-    def post(self,request):
-        user =request.user
+    def post(self, request):
+        user = request.user
 
-        serializer =UserProfileSerializer(data=request.data)
-        data={}
+        serializer = UserProfileSerializer(data=request.data)
+        data = {}
         if serializer.is_valid():
             profile = serializer.save()
             profile.name = user.username
@@ -153,16 +149,18 @@ class UserProfile(APIView):
             data = serializer.errors
         return Response(data)
 
+
 class ProfileVeiw(APIView):
     permission_classes = (IsAuthenticated,)
 
-    def get(self,request):
-        user =request.user
+    def get(self, request):
+        user = request.user
         user_id = user.id
         print(user.id)
-        profile = Userprofile.objects.filter(userid = user_id).values()
+        profile = Userprofile.objects.filter(userid=user_id).values()
         print(profile)
-        return JsonResponse({"profile":list(profile)})
+        return JsonResponse({"profile": list(profile)})
+
 
 class KycView(APIView):
     permission_classes = (IsAuthenticated,)
@@ -171,7 +169,7 @@ class KycView(APIView):
         if request.method == 'POST':
             user = request.user
             id = user.id
-            postpro = KycInfo.objects.filter(userid =id)
+            postpro = KycInfo.objects.filter(userid=id)
             print(id)
             if postpro.exists():
                 for kycstat in postpro:
@@ -181,62 +179,104 @@ class KycView(APIView):
                         data['result'] = 'allready entered kyc details'
                         data['status'] = 0
             else:
-                    serializer = KYCInfoSerializer(data=request.data)
-                    data = {}
-                    if serializer.is_valid():
-                        kyc = serializer.save()
-                        kyc.username = user.username
-                        kyc.userid = user.id
-                        kyc.kycstatus =1
-                        kyc.save()
-                        data['result'] = 'success'
-                        data['status'] = 1
-                    else:
-                        data['status'] = 0
-                        data = serializer.errors
+                serializer = KYCInfoSerializer(data=request.data)
+                data = {}
+                if serializer.is_valid():
+                    kyc = serializer.save()
+                    kyc.username = user.username
+                    kyc.userid = user.id
+                    kyc.kycstatus = 1
+                    kyc.save()
+                    data['result'] = 'success'
+                    data['status'] = 1
+                else:
+                    data['status'] = 0
+                    data = serializer.errors
         return Response(data)
 
 
 class AllProjects(APIView):
-    def get(self,request):
+    def get(self, request):
         queryset = PostProject.objects.all()
         serializer = PostProjectSerializer(queryset, many=True)
         return Response(serializer.data)
 
+
 class Projects(APIView):
     permission_classes = (IsAuthenticated,)
+
+
+
 
     def post(self, request):
         if request.method == 'POST':
             size = 3
             code = 'PR' + ''.join(random.choice(string.digits + string.ascii_letters[26:]) for _ in range(size))
+            string1 = request.data['project_title']
             user = request.user
+            project = string1.replace(" ", "-")
+            string2 = '-' + ''.join(choice(digits) for i in range(8))
+            # print(string2)
+            project_title = project + string2
+            # print(project_title)
+            postproject1 = PostProject.objects.all()
             serializer = PostProjectSerializer(data=request.data)
             data = {}
-            if serializer.is_valid():
-                pro = serializer.save()
-                pro.userid = user.id
-                pro.projectcode = code
-                pro.username = user.username
-                pro.save()
-                data['result'] = 'success'
-            else:
+            if postproject1.exists():
+                for var in postproject1:
+                    if var.project_title == string1:
+                        project_title1 = project_title
+                        if serializer.is_valid():
+                            pro = serializer.save()
+                            pro.userid = user.id
+                            pro.project_code = code
+                            pro.username = user.username
+                            pro.route = project_title1
+                            pro.save()
+                            data['result'] = 'success'
+                        else:
+                            project_title1 = project
+                            if serializer.is_valid():
+                                pro = serializer.save()
+                                pro.userid = user.id
+                                pro.project_code = code
+                                pro.username = user.username
+                                pro.route = project_title1
+                                pro.save()
+                                data['result'] = 'success'
+                            else:
+                                data = serializer.errors
+                        return Response(data)
+                else:
+                    project_title1 = project
+                    if serializer.is_valid():
+                        pro = serializer.save()
+                        pro.userid = user.id
+                        pro.project_code = code
+                        pro.username = user.username
+                        pro.route = project_title1
+                        pro.save()
+                        data['result'] = 'success'
+                    else:
+                        data = serializer.errors
+                return Response(data)
 
-                data = serializer.errors
-            return Response(data)
+                    # print(var)
+
 
 
 
 @api_view(["GET"])
 def generate(size):
-        size = 3
-        code = 'PR' + ''.join(random.choice(string.digits + string.ascii_letters[26:] ) for _ in range(size))
-        # if check_if_duplicate(code):
-        #     return generate(size=5)
-        return Response(code)
+    size = 3
+    code = 'PR' + ''.join(random.choice(string.digits + string.ascii_letters[26:]) for _ in range(size))
+    # if check_if_duplicate(code):
+    #     return generate(size=5)
+    return Response(code)
+
 
 class Category(APIView):
-    def post(self,request):
+    def post(self, request):
         if request.method == 'POST':
             size = 3
             catcode = 'CAT' + ''.join(random.choice(string.digits + string.ascii_letters[26:]) for _ in range(size))
@@ -254,25 +294,28 @@ class Category(APIView):
                 data = serializer.errors
             return Response(data)
 
+
 class AllCategories(APIView):
-    def get(self,request):
-        allcategories =Categories.objects.all().values()
+    def get(self, request):
+        allcategories = Categories.objects.all().values()
         data = {}
         data['categpries'] = allcategories
-        return  Response(data)
+        return Response(data)
+
 
 class SubCategory1(APIView):
-    def post(self,request):
+    def post(self, request):
         if request.method == 'POST':
             category_id = request.data['category_id']
             size = 3
-            subcatcode = 'SUBCAT' + ''.join(random.choice(string.digits + string.ascii_letters[26:]) for _ in range(size))
+            subcatcode = 'SUBCAT' + ''.join(
+                random.choice(string.digits + string.ascii_letters[26:]) for _ in range(size))
             serializer = SubCategorySerializer(data=request.data)
             data = {}
             if serializer.is_valid():
                 subcategory = serializer.save()
                 subcategory.subcategorycode = subcatcode
-                subcategory.category_id=category_id
+                subcategory.category_id = category_id
                 subcategory.save()
                 data['result'] = 'success'
                 data['status'] = 1
@@ -282,9 +325,8 @@ class SubCategory1(APIView):
             return Response(data)
 
 
-
 class SkillsView(APIView):
-    def post(self,request):
+    def post(self, request):
         if request.method == 'POST':
             category_id = request.data['category_id']
             serializer = SkillsSerializer(data=request.data)
@@ -302,20 +344,30 @@ class SkillsView(APIView):
 
 
 class CategoryList(APIView):
-    def get(self,request,cat_id):
+    def get(self, request, cat_id):
         if request.method == 'GET':
             # categorylk = request.data['category_id']
-            category = Categories.objects.get(id = cat_id)
+            category = Categories.objects.get(id=cat_id)
             # print(category)
-            cat_id=category.id
+            cat_id = category.id
             print(cat_id)
             sub = SubCategory.objects.filter(category_id=cat_id).values()
             # subcategory = SubCategory.objects.filter(category_id = cat_id).values()
             skills = Skills.objects.filter(category_id=cat_id).values()
-            data={}
-            data['subcategory']= sub
+            data = {}
+            data['subcategory'] = sub
             data['skills'] = skills
             print(sub)
+            return Response(data)
+
+
+class BudgetsDetails(APIView):
+    def get(self, request, budget_id, currency_id):
+        if request.method == 'GET':
+            budgets = Budgets.objects.get(budgettype_id=budget_id, currency_id=currency_id)
+            data = {}
+            data['min'] = budgets.min
+            data['max'] = budgets.max
             return Response(data)
 
 
@@ -341,6 +393,7 @@ class UsernameValidate(APIView):
         else:
             return Response('Success', status=HTTP_200_OK)
 
+
 class KycVerify(APIView):
     def get(self, request):
         serializer = KYCInfoSerializer()
@@ -349,24 +402,3 @@ class KycVerify(APIView):
         data['result'] = 'success'
         data['status'] = 1
         return Response(data)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

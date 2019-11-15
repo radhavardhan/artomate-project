@@ -22,6 +22,7 @@ urlpatterns = [
     path('category',views.Category.as_view()),
     path('subcategory',views.SubCategory1.as_view()),
     path('skills',views.SkillsView.as_view()),
+    path('budget/<int:budget_id>/<int:currency_id>',views.BudgetsDetails.as_view()),
     path('allcategories',views.AllCategories.as_view()),
     path('categorylist/<int:cat_id>',views.CategoryList.as_view()),
     path('uservalidate', views.UsernameValidation.as_view()),
