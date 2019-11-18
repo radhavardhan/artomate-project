@@ -29,6 +29,7 @@ urlpatterns = [
     path('user', views.UsernameValidate.as_view()),
     path('userprofile',views.UserProfile.as_view()),
     path('profileview',views.ProfileVeiw.as_view()),
+    path('bidproject',views.BidRequest.as_view()),
 
 ]
 

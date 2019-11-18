@@ -154,3 +154,9 @@ class Dashboard(models.Model):
     wallet = models.IntegerField()
     feedback_reviews=models.CharField(max_length=40)
 
+class Bidproject(models.Model):
+    project_code = models.CharField(max_length = 30, default =None , null=True)
+    project_name = models.CharField(max_length=300,default=None,null=True)
+    bid_amount = models.IntegerField()
+    user_id=models.IntegerField(default=None,null=True)
+    email = models.EmailField(verbose_name="email", max_length=60)

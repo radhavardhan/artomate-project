@@ -2,7 +2,7 @@ from django.contrib.auth.models import User
 from rest_framework import serializers
 from django.contrib.auth import authenticate
 from rest_framework.authtoken.models import Token
-from account.models import Account,KycInfo,Categories,PostProject,Userprofile,SubCategory,Skills
+from account.models import Account,KycInfo,Categories,PostProject,Userprofile,SubCategory,Skills,Bidproject
 
 
 class RegistrationSerializer(serializers.ModelSerializer):
@@ -140,4 +140,17 @@ class SkillsSerializer(serializers.ModelSerializer):
 
             )
             return skills
+
+class BidProjectSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Bidproject
+        fields = ('project_code', 'project_name', 'bid_amount', 'user_id', 'email')
+
+        def save(self):
+            bids = Bidproject(
+                project_code=self.validated_data['project_code'],
+                bid_amount=self.validated_data['bid_amount'],
+                email=self.validated_data['email'],
+            )
+            return bids
 
