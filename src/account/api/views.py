@@ -25,7 +25,8 @@ from rest_framework.status import (
 )
 from django.contrib.auth import authenticate
 from rest_framework.authtoken.models import Token
-from account.models import KycInfo, Account, Categories, PostProject, Userprofile, SubCategory, Skills, Budgets
+from account.models import KycInfo, Account, Categories, PostProject, Userprofile, SubCategory, Skills, Budgets, \
+    Bidproject
 
 from rest_framework.views import APIView
 from django.core.mail import send_mail
@@ -39,7 +40,7 @@ from django.contrib.auth.models import User
 from django.core.mail import EmailMessage
 
 from account.api.serializers import RegistrationSerializer, LoginSerializer, KYCInfoSerializer, CategoriesSerializer, \
-    PostProjectSerializer, UserProfileSerializer, SubCategorySerializer, SkillsSerializer
+    BidProjectSerializer, PostProjectSerializer, UserProfileSerializer, SubCategorySerializer, SkillsSerializer
 
 from random import choice
 from string import ascii_lowercase, digits, hexdigits
@@ -156,9 +157,9 @@ class ProfileVeiw(APIView):
     def get(self, request):
         user = request.user
         user_id = user.id
-        print(user.id)
+
         profile = Userprofile.objects.filter(userid=user_id).values()
-        print(profile)
+
         return JsonResponse({"profile": list(profile)})
 
 
@@ -204,9 +205,6 @@ class AllProjects(APIView):
 
 class Projects(APIView):
     permission_classes = (IsAuthenticated,)
-
-
-
 
     def post(self, request):
         if request.method == 'POST':
@@ -261,9 +259,7 @@ class Projects(APIView):
                         data = serializer.errors
                 return Response(data)
 
-                    # print(var)
-
-
+                # print(var)
 
 
 @api_view(["GET"])
@@ -375,7 +371,7 @@ class UsernameValidation(APIView):
     def post(self, request):
         if request.method == 'POST':
             name = request.data['username']
-            # print(name)
+
             usernameval = Account.objects.filter(username=name)
             if usernameval.exists():
                 return Response('Username already taken', status=HTTP_404_NOT_FOUND)
@@ -402,3 +398,43 @@ class KycVerify(APIView):
         data['result'] = 'success'
         data['status'] = 1
         return Response(data)
+
+
+class BidRequest(APIView):
+    permission_classes = (IsAuthenticated,)
+
+    def post(self, request):
+        if request.method == 'POST':
+            user = request.user
+            id = user.id
+            data = {}
+            project_code = request.data['project_code']
+            project_bid = PostProject.objects.get(project_code=project_code)
+            bid = Bidproject.objects.filter(project_code=project_code)
+
+            mylist = []
+            for var in bid:
+                mylist.append(var.user_id)
+                # print(mylist)
+
+            if id in mylist:
+                data['response'] = 'You have already bid for this project'
+                return Response(data)
+
+            else:
+                serializer = BidProjectSerializer(data=request.data)
+                data = {}
+                if serializer.is_valid():
+                    bids = serializer.save()
+                    bids.project_name = project_bid.project_title
+                    bids.user_id = id
+                    bids.save()
+                    data['result'] = 'success'
+                    data['status'] = 1
+                else:
+                    data = serializer.errors
+                    data['status'] = 0
+                return Response(data)
+
+
+
