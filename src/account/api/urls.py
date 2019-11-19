@@ -19,9 +19,9 @@ urlpatterns = [
     path('postproject',views.Projects.as_view()),
     path('home',views.AllProjects.as_view()),
     path('random',generate),
-    path('category',views.Category.as_view()),
-    path('subcategory',views.SubCategory1.as_view()),
-    path('skills',views.SkillsView.as_view()),
+    # path('category',views.Category.as_view()),
+    # path('subcategory',views.SubCategory1.as_view()),
+    # path('skills',views.SkillsView.as_view()),
     path('budget/<int:budget_id>/<int:currency_id>',views.BudgetsDetails.as_view()),
     path('allcategories',views.AllCategories.as_view()),
     path('categorylist/<int:cat_id>',views.CategoryList.as_view()),
@@ -30,6 +30,10 @@ urlpatterns = [
     path('userprofile',views.UserProfile.as_view()),
     path('profileview',views.ProfileVeiw.as_view()),
     path('bidproject',views.BidRequest.as_view()),
+    path('nof_bid',views.No_Of_Bid.as_view()),
+    path('projects_on_skills/<str:skill>',views.ProjectOnSkill.as_view()),
+    path('projects_on_skills/<str:skill>/<str:skill1>',views.ProjectOnSkill1.as_view()),
+
 
 ]
 

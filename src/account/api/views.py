@@ -15,6 +15,7 @@ from django.contrib.auth.tokens import default_token_generator
 import random
 import string
 from django.conf import settings
+from django.db.models import Max
 
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -49,13 +50,14 @@ from string import ascii_lowercase, digits, hexdigits
 @api_view(['POST', ])
 def registration_view(request):
     user = request.data['username']
-    print(user)
+
     if user == 'yes':
         string2 = ''.join(choice(digits) for i in range(8))
         string3 = ''.join(choice(ascii_lowercase) for i in range(3))
         randomstring = 'f' + string2 + string3
         serializer = RegistrationSerializer(data=request.data)
         data = {}
+
         if serializer.is_valid():
             account = serializer.save()
             account.username = randomstring
@@ -411,7 +413,8 @@ class BidRequest(APIView):
             project_code = request.data['project_code']
             project_bid = PostProject.objects.get(project_code=project_code)
             bid = Bidproject.objects.filter(project_code=project_code)
-
+            no_of_bid = Bidproject.objects.filter(project_code=project_code).count()
+            # print(no_of_bid)
             mylist = []
             for var in bid:
                 mylist.append(var.user_id)
@@ -428,13 +431,63 @@ class BidRequest(APIView):
                     bids = serializer.save()
                     bids.project_name = project_bid.project_title
                     bids.user_id = id
+                    bids.no_of_bid = no_of_bid + 1
                     bids.save()
+
                     data['result'] = 'success'
                     data['status'] = 1
                 else:
                     data = serializer.errors
                     data['status'] = 0
                 return Response(data)
+
+
+class No_Of_Bid(APIView):
+    def get(self,request):
+        project_code = request.data['project_code']
+        bid = Bidproject.objects.filter(project_code=project_code).values()
+        count_of_bid=bid.aggregate(Max('no_of_bid'))
+
+        print("------------")
+        print(count_of_bid)
+        print("----------------")
+        for var in bid:
+            print(var)
+
+        # mylist = list(bid)
+        # print(mylist)
+        return Response(bid)
+
+class ProjectOnSkill(APIView):
+    def get(self,request,skill):
+        projects= PostProject.objects.filter(skills=skill).values()
+
+        # print(projects)
+        # bid = Bidproject.objects.filter(project_code=projects.project_code).values()
+        # count_of_bid = bid.aggregate(Max('no_of_bid'))
+        data={}
+        data['projetcs']=projects
+        # for var in list(projects):
+        #     data = {
+        #         "project_code": var.project_code,
+        #         "project_title": var.project_title,
+        #         "project_description": var.description,
+        #         "skills": var.skills,
+        #         "Experience required": var.experience_required,
+        #         "country": var.country_name,
+        #         # "No_Of_bid":count_of_bid
+        #     }
+        return Response(data)
+
+class ProjectOnSkill1(APIView):
+    def get(self, request, skill,skill1):
+        projects = PostProject.objects.filter(skills=skill).values()
+        projects1 = PostProject.objects.filter(skills=skill1).values()
+        data = {}
+        data['projetcs'] = projects
+        data['projetcs1'] = projects1
+        return Response(data)
+
 
 
 

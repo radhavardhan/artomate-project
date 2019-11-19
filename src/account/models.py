@@ -160,3 +160,13 @@ class Bidproject(models.Model):
     bid_amount = models.IntegerField()
     user_id=models.IntegerField(default=None,null=True)
     email = models.EmailField(verbose_name="email", max_length=60)
+    no_of_bid = models.IntegerField(default=None,null =True)
+
+class No_of_bids_for_project(models.Model):
+    project_code = models.CharField(max_length=30, default=None, null=True)
+    project_name = models.CharField(max_length=300, default=None, null=True)
+    no_of_bid = models.IntegerField()
+    created_at = models.DateTimeField(verbose_name='created_at', auto_now_add=True)
+    update_at = models.DateTimeField(verbose_name='updates_at', auto_now=True)
+
+
