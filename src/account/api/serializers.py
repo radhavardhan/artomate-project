@@ -2,7 +2,7 @@ from django.contrib.auth.models import User
 from rest_framework import serializers
 from django.contrib.auth import authenticate
 from rest_framework.authtoken.models import Token
-from account.models import Account,KycInfo,Categories,PostProject,Userprofile,SubCategory,Skills,Bidproject
+from account.models import Account,KycInfo,Categories,PostProject,Userprofile,SubCategory,Skills,Bidproject,Project_skills,No_of_bids_for_project
 
 
 class RegistrationSerializer(serializers.ModelSerializer):
@@ -104,14 +104,32 @@ class PostProjectSerializer(serializers.ModelSerializer):
             )
             return project
 
+class ProjectSkillsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Project_skills
+        fields = ('id','project_id','skill_id','skill_name')
+
+        def save(self):
+            project_skill = Project_skills(
+
+
+            )
+
+class NoOfBidProjectSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = No_of_bids_for_project
+        fields = ('id','project_code','project_name','no_of_bid')
+
+
+
 class CategoriesSerializer(serializers.ModelSerializer):
     class Meta:
         model = Categories
-        fields = ('id', 'categoryname', 'categorycode')
+        fields = ('id', 'category_name', 'category_code')
 
         def save(self):
             categories = Categories(
-                categoryname=self.validated_data['categoryname'],
+                category_name=self.validated_data['category_name'],
 
             )
             return categories
@@ -119,11 +137,11 @@ class CategoriesSerializer(serializers.ModelSerializer):
 class SubCategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = SubCategory
-        fields = ('id', 'subcategoryname', 'subcategorycode','category_id')
+        fields = ('id', 'sub_category_name', 'sub_category_code','category_id')
 
         def save(self):
             subcategories = SubCategory(
-                subcategoryname=self.validated_data['subcategoryname'],
+                sub_category_name=self.validated_data['sub_category_name'],
                 category_id = self.validated_data['category_id']
             )
             return subcategories

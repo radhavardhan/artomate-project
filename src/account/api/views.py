@@ -26,8 +26,7 @@ from rest_framework.status import (
 )
 from django.contrib.auth import authenticate
 from rest_framework.authtoken.models import Token
-from account.models import KycInfo, Account, Categories, PostProject, Userprofile, SubCategory, Skills, Budgets, \
-    Bidproject
+from account.models import KycInfo, Account, Categories, PostProject, Userprofile, SubCategory, Skills, Budgets, Project_skills,Bidproject,No_of_bids_for_project
 
 from rest_framework.views import APIView
 from django.core.mail import send_mail
@@ -41,7 +40,7 @@ from django.contrib.auth.models import User
 from django.core.mail import EmailMessage
 
 from account.api.serializers import RegistrationSerializer, LoginSerializer, KYCInfoSerializer, CategoriesSerializer, \
-    BidProjectSerializer, PostProjectSerializer, UserProfileSerializer, SubCategorySerializer, SkillsSerializer
+    BidProjectSerializer, PostProjectSerializer, UserProfileSerializer, SubCategorySerializer, SkillsSerializer,NoOfBidProjectSerializer
 
 from random import choice
 from string import ascii_lowercase, digits, hexdigits
@@ -213,6 +212,12 @@ class Projects(APIView):
             size = 3
             code = 'PR' + ''.join(random.choice(string.digits + string.ascii_letters[26:]) for _ in range(size))
             string1 = request.data['project_title']
+            skills =request.data['skills']
+            for x in skills.split(","):
+                print(x)
+                # skilltable =Project_skills.objects.all()
+
+
             user = request.user
             project = string1.replace(" ", "-")
             string2 = '-' + ''.join(choice(digits) for i in range(8))
@@ -228,12 +233,15 @@ class Projects(APIView):
                         project_title1 = project_title
                         if serializer.is_valid():
                             pro = serializer.save()
-                            pro.userid = user.id
-                            pro.project_code = code
-                            pro.username = user.username
-                            pro.route = project_title1
-                            pro.save()
-                            data['result'] = 'success'
+                            for x in skills.split(","):
+                                skill = Project_skills.objects.create(project_id=1,skill_id=1,skill_name=x)
+                                skill.save()
+                                pro.userid = user.id
+                                pro.project_code = code
+                                pro.username = user.username
+                                pro.route = project_title1
+                                pro.save()
+                                data['result'] = 'success'
                         else:
                             project_title1 = project
                             if serializer.is_valid():
@@ -283,7 +291,7 @@ class Category(APIView):
             data = {}
             if serializer.is_valid():
                 category = serializer.save()
-                category.categorycode = catcode
+                category.category_code = catcode
                 category.save()
                 data['result'] = 'success'
                 data['status'] = 1
@@ -312,7 +320,7 @@ class SubCategory1(APIView):
             data = {}
             if serializer.is_valid():
                 subcategory = serializer.save()
-                subcategory.subcategorycode = subcatcode
+                subcategory.sub_category_code = subcatcode
                 subcategory.category_id = category_id
                 subcategory.save()
                 data['result'] = 'success'
@@ -447,16 +455,25 @@ class No_Of_Bid(APIView):
         project_code = request.data['project_code']
         bid = Bidproject.objects.filter(project_code=project_code).values()
         count_of_bid=bid.aggregate(Max('no_of_bid'))
+        serializer = NoOfBidProjectSerializer()
+        noofbid = NoOfBidProjectSerializer
+        noofbid.project_code = bid.project_code
+        noofbid.project_name = bid.project_name
+        noofbid.no_of_bid = count_of_bid
+        noofbid.save()
 
         print("------------")
         print(count_of_bid)
         print("----------------")
-        for var in bid:
-            print(var)
+        # for var in bid:
+        #     print(var)
 
-        # mylist = list(bid)
-        # print(mylist)
-        return Response(bid)
+        mylist = list(bid)
+        print(mylist)
+        data = {}
+        data['projetcs'] = bid
+        data['no_of_bid']=count_of_bid
+        return Response(data)
 
 class ProjectOnSkill(APIView):
     def get(self,request,skill):

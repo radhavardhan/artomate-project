@@ -89,7 +89,7 @@ class SubCategory(models.Model):
 
 class Skills(models.Model):
     category_id = models.IntegerField(blank=True)
-    sub_category_id = models.IntegerField(blank=True)
+    # sub_category_id = models.IntegerField(blank=True)
     skills = models.CharField(max_length=40)
 
 class Currency(models.Model):
@@ -168,5 +168,14 @@ class No_of_bids_for_project(models.Model):
     no_of_bid = models.IntegerField()
     created_at = models.DateTimeField(verbose_name='created_at', auto_now_add=True)
     update_at = models.DateTimeField(verbose_name='updates_at', auto_now=True)
+
+class Project_skills(models.Model):
+    project_id = models.IntegerField()
+    skill_id = models.IntegerField()
+    skill_name = models.CharField(max_length=50)
+    created_at = models.DateTimeField(verbose_name='created_at', auto_now_add=True)
+    update_at = models.DateTimeField(verbose_name='updates_at', auto_now=True)
+
+
 
 
