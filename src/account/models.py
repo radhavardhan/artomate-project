@@ -123,6 +123,10 @@ class PostProject(models.Model):
     userid = models.IntegerField(default=None, null=True)
     username = models.CharField(max_length=50,default=None, null=True)
     skills = models.TextField(max_length = 300)
+    skill1 =models.TextField(max_length = 300,blank=True)
+    skill2 = models.TextField(max_length=300, blank=True)
+    skill3 = models.TextField(max_length=300, blank=True)
+    skill4 = models.TextField(max_length=300, blank=True)
     budgetType_Id = models.IntegerField(default=None)
     currency_id = models.IntegerField(default=None)
     min = models.IntegerField(null=True)
@@ -155,12 +159,14 @@ class Dashboard(models.Model):
     feedback_reviews=models.CharField(max_length=40)
 
 class Bidproject(models.Model):
+    project_id = models.IntegerField(default =None,blank =True)
     project_code = models.CharField(max_length = 30, default =None , null=True)
     project_name = models.CharField(max_length=300,default=None,null=True)
     bid_amount = models.IntegerField()
     user_id=models.IntegerField(default=None,null=True)
     email = models.EmailField(verbose_name="email", max_length=60)
     no_of_bid = models.IntegerField(default=None,null =True)
+    # total_bids=models.
 
 class No_of_bids_for_project(models.Model):
     project_code = models.CharField(max_length=30, default=None, null=True)
@@ -169,9 +175,7 @@ class No_of_bids_for_project(models.Model):
     created_at = models.DateTimeField(verbose_name='created_at', auto_now_add=True)
     update_at = models.DateTimeField(verbose_name='updates_at', auto_now=True)
 
-class Project_skills(models.Model):
-    project_id = models.IntegerField()
-    skill_id = models.IntegerField()
+class Const_skills(models.Model):
     skill_name = models.CharField(max_length=50)
     created_at = models.DateTimeField(verbose_name='created_at', auto_now_add=True)
     update_at = models.DateTimeField(verbose_name='updates_at', auto_now=True)

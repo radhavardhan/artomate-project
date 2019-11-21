@@ -1,8 +1,9 @@
 from django.contrib.auth.models import User
 from rest_framework import serializers
 from django.contrib.auth import authenticate
+from django.db.models import Max
 from rest_framework.authtoken.models import Token
-from account.models import Account,KycInfo,Categories,PostProject,Userprofile,SubCategory,Skills,Bidproject,Project_skills,No_of_bids_for_project
+from account.models import Account,KycInfo,Categories,PostProject,Userprofile,SubCategory,Skills,Bidproject,No_of_bids_for_project
 
 
 class RegistrationSerializer(serializers.ModelSerializer):
@@ -75,15 +76,15 @@ class KYCInfoSerializer(serializers.ModelSerializer):
             idprooffront = self.validated_data['idprooffront'],
             idproofback=self.validated_data['idproofback'],
         )
-
         return kyc
+
 
 
 class PostProjectSerializer(serializers.ModelSerializer):
     class Meta:
         model = PostProject
         fields = ('id', 'project_title', 'description', 'files', 'userid', 'username', 'project_code', 'skills','category_id','subcategory_id',
-                 'custom_budget', 'project_deadline', 'experience_required', 'country_id', 'budgetType_Id', 'currency_id', 'min', 'max')
+                 'custom_budget', 'project_deadline', 'experience_required', 'country_id', 'budgetType_Id', 'currency_id', 'min', 'max','skill1','skill2','skill3','skill4')
 
         def save(self):
             project = PostProject(
@@ -91,6 +92,7 @@ class PostProjectSerializer(serializers.ModelSerializer):
                 description=self.validated_data['description'],
                 files=self.validated_data['files'],
                 skills=self.validated_data['skills'],
+                # skill1=self.validated_data['skill1'],
                 currency_id=self.validated_data['currencyid'],
                 budgetType_Id=self.validated_data['budgetTypeId'],
                 category_id=self.validated_data['category_id'],
@@ -104,21 +106,25 @@ class PostProjectSerializer(serializers.ModelSerializer):
             )
             return project
 
-class ProjectSkillsSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Project_skills
-        fields = ('id','project_id','skill_id','skill_name')
 
-        def save(self):
-            project_skill = Project_skills(
-
-
-            )
+        # def no_of_Bid(self):
+        #     bid = No_of_bids_for_project.objects.filter(project=self)
+        #     count_of_bid = bid.aggregate(Max('no_of_bid'))
+        #     noofbid = NoOfBidProjectSerializer
+        #     noofbid.project_code = bid.project_code
+        #     noofbid.project_name = bid.project_name
+        #     noofbid.no_of_bid = count_of_bid
+        #     noofbid.save()
+        #     return noofbid
 
 class NoOfBidProjectSerializer(serializers.ModelSerializer):
     class Meta:
         model = No_of_bids_for_project
         fields = ('id','project_code','project_name','no_of_bid')
+
+
+
+
 
 
 
@@ -162,7 +168,7 @@ class SkillsSerializer(serializers.ModelSerializer):
 class BidProjectSerializer(serializers.ModelSerializer):
     class Meta:
         model = Bidproject
-        fields = ('project_code', 'project_name', 'bid_amount', 'user_id', 'email','no_of_bid')
+        fields = ('project_code', 'project_name', 'bid_amount', 'user_id', 'email','project_id')
 
         def save(self):
             bids = Bidproject(

@@ -30,9 +30,9 @@ urlpatterns = [
     path('userprofile',views.UserProfile.as_view()),
     path('profileview',views.ProfileVeiw.as_view()),
     path('bidproject',views.BidRequest.as_view()),
-    path('nof_bid',views.No_Of_Bid.as_view()),
+    path('totalbid',views.No_Of_Bid.as_view()),
     path('projects_on_skills/<str:skill>',views.ProjectOnSkill.as_view()),
-    path('projects_on_skills/<str:skill>/<str:skill1>',views.ProjectOnSkill1.as_view()),
+    path('projects_on_skills/<str:skill1>/<str:skill2>',views.ProjectOnSkill1.as_view()),
 
 
 ]

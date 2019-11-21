@@ -15,7 +15,7 @@ from django.contrib.auth.tokens import default_token_generator
 import random
 import string
 from django.conf import settings
-from django.db.models import Max
+from django.db.models import Max, Q, Count
 
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -26,7 +26,10 @@ from rest_framework.status import (
 )
 from django.contrib.auth import authenticate
 from rest_framework.authtoken.models import Token
-from account.models import KycInfo, Account, Categories, PostProject, Userprofile, SubCategory, Skills, Budgets, Project_skills,Bidproject,No_of_bids_for_project
+from rest_framework.utils import json
+
+from account.models import KycInfo, Account, Categories, PostProject, Userprofile, SubCategory, Skills, Budgets, \
+    Bidproject, No_of_bids_for_project, Const_skills
 
 from rest_framework.views import APIView
 from django.core.mail import send_mail
@@ -36,11 +39,12 @@ from django.utils.encoding import force_bytes, force_text
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.template.loader import render_to_string
 from account.token import account_activation_token
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, Group
 from django.core.mail import EmailMessage
 
 from account.api.serializers import RegistrationSerializer, LoginSerializer, KYCInfoSerializer, CategoriesSerializer, \
-    BidProjectSerializer, PostProjectSerializer, UserProfileSerializer, SubCategorySerializer, SkillsSerializer,NoOfBidProjectSerializer
+    BidProjectSerializer, PostProjectSerializer, UserProfileSerializer, SubCategorySerializer, SkillsSerializer, \
+    NoOfBidProjectSerializer
 
 from random import choice
 from string import ascii_lowercase, digits, hexdigits
@@ -158,9 +162,7 @@ class ProfileVeiw(APIView):
     def get(self, request):
         user = request.user
         user_id = user.id
-
         profile = Userprofile.objects.filter(userid=user_id).values()
-
         return JsonResponse({"profile": list(profile)})
 
 
@@ -199,9 +201,14 @@ class KycView(APIView):
 
 class AllProjects(APIView):
     def get(self, request):
-        queryset = PostProject.objects.all()
-        serializer = PostProjectSerializer(queryset, many=True)
-        return Response(serializer.data)
+        queryset = PostProject.objects.values('project_title', 'description', 'min', 'max', 'project_deadline',
+                                              'skill1')
+
+        # bid = Bidproject.objects.filter(project_id=project_id).count()
+
+        print(queryset)
+        data = {}
+        return JsonResponse({"All Jobs": list(queryset)})
 
 
 class Projects(APIView):
@@ -209,75 +216,89 @@ class Projects(APIView):
 
     def post(self, request):
         if request.method == 'POST':
+            data = {}
             size = 3
             code = 'PR' + ''.join(random.choice(string.digits + string.ascii_letters[26:]) for _ in range(size))
             string1 = request.data['project_title']
-            skills =request.data['skills']
-            for x in skills.split(","):
-                print(x)
-                # skilltable =Project_skills.objects.all()
+            skills = request.data['skills']
+            split_skill = skills.split(',')
+            const_skills = Const_skills.objects.all().values('id', 'skill_name')
+            skills_set = list(const_skills)
+            skill_set_list = []
+            for j in split_skill:
 
+                for i in skills_set:
+                    if j == i['skill_name']:
+                        id = i['id']
+                        skill_set_list.append(id)
+            print(skill_set_list)
 
             user = request.user
             project = string1.replace(" ", "-")
             string2 = '-' + ''.join(choice(digits) for i in range(8))
-            # print(string2)
             project_title = project + string2
-            # print(project_title)
             postproject1 = PostProject.objects.all()
             serializer = PostProjectSerializer(data=request.data)
-            data = {}
             if postproject1.exists():
                 for var in postproject1:
                     if var.project_title == string1:
                         project_title1 = project_title
                         if serializer.is_valid():
                             pro = serializer.save()
-                            for x in skills.split(","):
-                                skill = Project_skills.objects.create(project_id=1,skill_id=1,skill_name=x)
-                                skill.save()
-                                pro.userid = user.id
-                                pro.project_code = code
-                                pro.username = user.username
-                                pro.route = project_title1
-                                pro.save()
-                                data['result'] = 'success'
-                        else:
-                            project_title1 = project
-                            if serializer.is_valid():
-                                pro = serializer.save()
-                                pro.userid = user.id
-                                pro.project_code = code
-                                pro.username = user.username
-                                pro.route = project_title1
-                                pro.save()
-                                data['result'] = 'success'
-                            else:
-                                data = serializer.errors
-                        return Response(data)
-                else:
-                    project_title1 = project
-                    if serializer.is_valid():
-                        pro = serializer.save()
-                        pro.userid = user.id
-                        pro.project_code = code
-                        pro.username = user.username
-                        pro.route = project_title1
-                        pro.save()
-                        data['result'] = 'success'
-                    else:
-                        data = serializer.errors
-                return Response(data)
+                            pro.userid = user.id
+                            for foo in skill_set_list:
+                                print(foo)
+                                pro.skills =foo
+                                pro.skill1 = foo
+                                pro.skill2 = foo
+                                pro.skill3 = foo
 
-                # print(var)
+                            pro.project_code = code
+                            pro.username = user.username
+                            pro.route = project_title1
+                            pro.save()
+                            data['result'] = 'success'
+
+                    else:
+                        project_title1 = project
+                        if serializer.is_valid():
+                            pro = serializer.save()
+                            pro.skills = skill_set_list
+                            pro.skill1 = skill_set_list
+                            pro.skill2 = skill_set_list
+                            pro.skill3 = skill_set_list
+                            pro.userid = user.id
+                            pro.project_code = code
+                            pro.username = user.username
+                            pro.route = project_title1
+                            pro.save()
+                            data['result'] = 'success'
+                        else:
+                            data = serializer.errors
+                    return Response(data)
+            else:
+                project_title1 = project
+                if serializer.is_valid():
+                    pro = serializer.save()
+                    pro.skills = skill_set_list
+                    pro.skill1 = skill_set_list
+                    pro.skill2 = skill_set_list
+                    pro.skill3 = skill_set_list
+                    pro.userid = user.id
+                    pro.project_code = code
+                    pro.username = user.username
+                    pro.route = project_title1
+                    pro.save()
+                    data['result'] = 'success'
+                else:
+                    data = serializer.errors
+            return Response(data)
 
 
 @api_view(["GET"])
 def generate(size):
     size = 3
     code = 'PR' + ''.join(random.choice(string.digits + string.ascii_letters[26:]) for _ in range(size))
-    # if check_if_duplicate(code):
-    #     return generate(size=5)
     return Response(code)
 
 
@@ -420,13 +441,13 @@ class BidRequest(APIView):
             data = {}
             project_code = request.data['project_code']
             project_bid = PostProject.objects.get(project_code=project_code)
+            print(project_bid.id)
             bid = Bidproject.objects.filter(project_code=project_code)
             no_of_bid = Bidproject.objects.filter(project_code=project_code).count()
-            # print(no_of_bid)
+            print(no_of_bid)
             mylist = []
             for var in bid:
                 mylist.append(var.user_id)
-                # print(mylist)
 
             if id in mylist:
                 data['response'] = 'You have already bid for this project'
@@ -438,6 +459,7 @@ class BidRequest(APIView):
                 if serializer.is_valid():
                     bids = serializer.save()
                     bids.project_name = project_bid.project_title
+                    bids.project_id = project_bid.id
                     bids.user_id = id
                     bids.no_of_bid = no_of_bid + 1
                     bids.save()
@@ -451,60 +473,39 @@ class BidRequest(APIView):
 
 
 class No_Of_Bid(APIView):
-    def get(self,request):
-        project_code = request.data['project_code']
-        bid = Bidproject.objects.filter(project_code=project_code).values()
-        count_of_bid=bid.aggregate(Max('no_of_bid'))
-        serializer = NoOfBidProjectSerializer()
-        noofbid = NoOfBidProjectSerializer
-        noofbid.project_code = bid.project_code
-        noofbid.project_name = bid.project_name
-        noofbid.no_of_bid = count_of_bid
-        noofbid.save()
-
-        print("------------")
-        print(count_of_bid)
-        print("----------------")
-        # for var in bid:
-        #     print(var)
-
-        mylist = list(bid)
-        print(mylist)
+    def get(self, request):
+        project_id = request.data['project_id']
         data = {}
-        data['projetcs'] = bid
-        data['no_of_bid']=count_of_bid
+        data['Total number of bids for project'] = Bidproject.objects.filter(project_id=project_id).count()
+        data['Project name'] = Bidproject.objects.filter(project_id=project_id).values(
+            'project_name')
         return Response(data)
+
 
 class ProjectOnSkill(APIView):
-    def get(self,request,skill):
-        projects= PostProject.objects.filter(skills=skill).values()
+    def get(self, request, skill):
+        skillname = skill
+        print(skillname)
+        data = {}
+        value = PostProject.objects.filter(Q(skills=skillname) | Q(skill1=skillname)).values('project_title', 'skills',
+                                                                                             'skill1')
+        data['response'] = value
 
-        # print(projects)
-        # bid = Bidproject.objects.filter(project_code=projects.project_code).values()
-        # count_of_bid = bid.aggregate(Max('no_of_bid'))
-        data={}
-        data['projetcs']=projects
-        # for var in list(projects):
-        #     data = {
-        #         "project_code": var.project_code,
-        #         "project_title": var.project_title,
-        #         "project_description": var.description,
-        #         "skills": var.skills,
-        #         "Experience required": var.experience_required,
-        #         "country": var.country_name,
-        #         # "No_Of_bid":count_of_bid
-        #     }
-        return Response(data)
+        return JsonResponse({"models_to_return": list(value)})
+
 
 class ProjectOnSkill1(APIView):
-    def get(self, request, skill,skill1):
-        projects = PostProject.objects.filter(skills=skill).values()
-        projects1 = PostProject.objects.filter(skills=skill1).values()
+    def get(self, request, skill1, skill2):
+        print('skill', skill1, 'skill1', skill2)
         data = {}
-        data['projetcs'] = projects
-        data['projetcs1'] = projects1
-        return Response(data)
 
+        # projects = PostProject.objects.filter(skills=skill1).values('project_title')
+        # print(projects)
+        # projects1 = PostProject.objects.filter(skill1=skill2).values('project_title')
+        # print(projects1)
 
+        value = PostProject.objects.filter(Q(skills=skill1) | Q(skill1=skill2)).values()
 
+        data['response'] = value
 
+        return JsonResponse({"models_to_return": list(value)})
