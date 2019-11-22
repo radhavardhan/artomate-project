@@ -1,5 +1,23 @@
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
+# from django.utils import simplejson as json
+# from django_mysql.models import JSONField, Model
+# import jsonfield
+from djongo.models import json
+
+
+class JSONField():
+    id=models.IntegerField()
+    skill_code=models.CharField(max_length=30)
+
+    def dump(self,data):
+        data=json.dumps(data)
+        return data
+    def load(self,data):
+        data = json.load(data)
+        return data
+
+
 
 
 class MyAccountManager(BaseUserManager):
@@ -88,9 +106,8 @@ class SubCategory(models.Model):
     sub_category_code = models.CharField(max_length=60, default =None , null=True,unique=True)
 
 class Skills(models.Model):
-    category_id = models.IntegerField(blank=True)
-    # sub_category_id = models.IntegerField(blank=True)
-    skills = models.CharField(max_length=40)
+    skill_id = models.IntegerField(blank=True)
+    project_id =models.IntegerField()
 
 class Currency(models.Model):
     currency_type = models.CharField(max_length=30)
@@ -119,14 +136,11 @@ class PostProject(models.Model):
     route = models.CharField(max_length=100,blank =True)
     project_code = models.CharField(max_length = 30, default =None , null=True,unique=True)
     description = models.CharField(max_length=50)
-    files = models.FileField(upload_to='pictures/files/',)
+    files = models.FileField(upload_to='pictures/files/',null=True)
     userid = models.IntegerField(default=None, null=True)
     username = models.CharField(max_length=50,default=None, null=True)
-    skills = models.TextField(max_length = 300)
-    skill1 =models.TextField(max_length = 300,blank=True)
-    skill2 = models.TextField(max_length=300, blank=True)
-    skill3 = models.TextField(max_length=300, blank=True)
-    skill4 = models.TextField(max_length=300, blank=True)
+
+
     budgetType_Id = models.IntegerField(default=None)
     currency_id = models.IntegerField(default=None)
     min = models.IntegerField(null=True)
@@ -179,6 +193,11 @@ class Const_skills(models.Model):
     skill_name = models.CharField(max_length=50)
     created_at = models.DateTimeField(verbose_name='created_at', auto_now_add=True)
     update_at = models.DateTimeField(verbose_name='updates_at', auto_now=True)
+
+class Json_data(models.Model):
+    skill = JSONField()
+    skillcode=models.CharField(max_length=30)
+
 
 
 

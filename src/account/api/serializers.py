@@ -83,16 +83,15 @@ class KYCInfoSerializer(serializers.ModelSerializer):
 class PostProjectSerializer(serializers.ModelSerializer):
     class Meta:
         model = PostProject
-        fields = ('id', 'project_title', 'description', 'files', 'userid', 'username', 'project_code', 'skills','category_id','subcategory_id',
-                 'custom_budget', 'project_deadline', 'experience_required', 'country_id', 'budgetType_Id', 'currency_id', 'min', 'max','skill1','skill2','skill3','skill4')
+        fields = ('id', 'project_title', 'description', 'files', 'userid', 'username', 'project_code', 'category_id','subcategory_id',
+                 'custom_budget', 'project_deadline', 'experience_required', 'country_id', 'budgetType_Id', 'currency_id', 'min', 'max',)
 
         def save(self):
             project = PostProject(
                 project_title=self.validated_data['project_title'],
                 description=self.validated_data['description'],
                 files=self.validated_data['files'],
-                skills=self.validated_data['skills'],
-                # skill1=self.validated_data['skill1'],
+
                 currency_id=self.validated_data['currencyid'],
                 budgetType_Id=self.validated_data['budgetTypeId'],
                 category_id=self.validated_data['category_id'],
