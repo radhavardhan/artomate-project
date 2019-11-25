@@ -107,6 +107,7 @@ class SubCategory(models.Model):
 
 class Skills(models.Model):
     skill_id = models.IntegerField(blank=True)
+
     project_id =models.IntegerField()
 
 class Currency(models.Model):
@@ -191,6 +192,7 @@ class No_of_bids_for_project(models.Model):
 
 class Const_skills(models.Model):
     skill_name = models.CharField(max_length=50)
+    skill_code = models.CharField(max_length=30,default=None,null=True)
     created_at = models.DateTimeField(verbose_name='created_at', auto_now_add=True)
     update_at = models.DateTimeField(verbose_name='updates_at', auto_now=True)
 

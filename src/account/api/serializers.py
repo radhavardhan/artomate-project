@@ -3,7 +3,7 @@ from rest_framework import serializers
 from django.contrib.auth import authenticate
 from django.db.models import Max
 from rest_framework.authtoken.models import Token
-from account.models import Account,KycInfo,Categories,PostProject,Userprofile,SubCategory,Skills,Bidproject,No_of_bids_for_project
+from account.models import Account,KycInfo,Categories,PostProject,Userprofile,SubCategory,Skills,Bidproject,No_of_bids_for_project,Const_skills
 
 
 class RegistrationSerializer(serializers.ModelSerializer):
@@ -151,15 +151,14 @@ class SubCategorySerializer(serializers.ModelSerializer):
             )
             return subcategories
 
-class SkillsSerializer(serializers.ModelSerializer):
+class Const_SkillSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Skills
-        fields = ('id', 'skills','category_id')
+        model = Const_skills
+        fields = ('id', 'skill_code','skill_name')
 
         def save(self):
-            skills = Skills(
-                skills=self.validated_data['skills'],
-                category_id=self.validated_data['category_id']
+            skills = Const_skills(
+                skill_name=self.validated_data['skill_name']
 
             )
             return skills

@@ -43,7 +43,7 @@ from django.contrib.auth.models import User, Group
 from django.core.mail import EmailMessage
 
 from account.api.serializers import RegistrationSerializer, LoginSerializer, KYCInfoSerializer, CategoriesSerializer, \
-    BidProjectSerializer, PostProjectSerializer, UserProfileSerializer, SubCategorySerializer, SkillsSerializer, \
+    BidProjectSerializer, PostProjectSerializer, UserProfileSerializer, SubCategorySerializer, Const_SkillSerializer, \
     NoOfBidProjectSerializer
 
 from random import choice
@@ -351,17 +351,19 @@ class SubCategory1(APIView):
             return Response(data)
 
 
-class SkillsView(APIView):
+class Const_Skill_Add(APIView):
     def post(self, request):
         if request.method == 'POST':
-            category_id = request.data['category_id']
-            serializer = SkillsSerializer(data=request.data)
+            size = 3
+            skillcode = 'SKILL' + ''.join(
+                random.choice(string.digits + string.ascii_letters[26:]) for _ in range(size))
+            serializer = Const_SkillSerializer(data=request.data)
             data = {}
             if serializer.is_valid():
                 skills = serializer.save()
-                skills.category_id = category_id
+                skills.skill_code = skillcode
                 skills.save()
-                data['result'] = 'success'
+                data['result'] = 'Skill added successfully'
                 data['status'] = 1
             else:
                 data['status'] = 0
@@ -482,26 +484,24 @@ class No_Of_Bid(APIView):
 
 
 class ProjectOnSkill(APIView):
-    def get(self, request, skill_id):
-        skill = skill_id
-        print(skill)
-
-        value= PostProject.objects.all().filter('skills')
-
+    def get(self, request, skill_code):
+        data={}
+        skill = skill_code
         mylist=[]
+        value = Const_skills.objects.filter(skill_code=skill).values('id')
         for i in value:
-            for skill in i:
-                for skill_id in skill:
-                    print(skill_id)
-                print(skill)
-            mylist.append(i)
-        print(mylist)
-        data = {}
-        # value = PostProject.objects.filter(Q(skills=skillname) | Q(skill1=skillname)).values('project_title', 'skills',
-        #                                                                                      'skill1')
-        data['response'] = value
+            value1 = Skills.objects.filter(skill_id=i['id']).values('project_id')
+            print(value1)
+            for j in value1:
+                results = PostProject.objects.filter(id=j['project_id']).values('project_title', 'route')
+                print('==================================')
+                mylist.append(results)
+                print(mylist)
+                print('-----------------------------------')
+                # print(results)
+            # data['response'] = results
 
-        return JsonResponse({"models_to_return": list(value)})
+        return Response(mylist)
 
 
 class ProjectOnSkill1(APIView):
@@ -556,7 +556,7 @@ class TestJson(APIView):
 class Skill_view(APIView):
 
     def get(self,request):
-        skills= Const_skills.objects.all().values('id','skill_name')
+        skills= Const_skills.objects.all().values('id','skill_name','skill_code')
         print(skills)
         data={}
         data['skills']=skills
