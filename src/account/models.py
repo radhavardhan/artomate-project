@@ -107,6 +107,7 @@ class SubCategory(models.Model):
 
 class Skills(models.Model):
     skill_id = models.IntegerField(blank=True)
+    skill_name = models.CharField(max_length=30,blank=True)
 
     project_id =models.IntegerField()
 

@@ -32,9 +32,10 @@ urlpatterns = [
     path('bidproject',views.BidRequest.as_view()),
     path('totalbid',views.No_Of_Bid.as_view()),
     path('projects_on_skills/<str:skill_code>',views.ProjectOnSkill.as_view()),
-    path('projects_on_skills/<str:skill1>/<str:skill2>',views.ProjectOnSkill1.as_view()),
+    # path('projects_on_skills/<str:skill_code1>/<str:skill_code2>',views.ProjectOnSkill1.as_view()),
     path('testjson', views.TestJson.as_view()),
     path('skill_view',views.Skill_view.as_view()),
+    url(r'^projects_on_skills/(?P<skill_code>\w+)$', views.ProjectOnSkill1.as_view()),
 
 ]
 
