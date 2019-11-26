@@ -154,11 +154,12 @@ class SubCategorySerializer(serializers.ModelSerializer):
 class Const_SkillSerializer(serializers.ModelSerializer):
     class Meta:
         model = Const_skills
-        fields = ('id', 'skill_code','skill_name')
+        fields = ('id', 'skill_code','skill_name','category_id')
 
         def save(self):
             skills = Const_skills(
-                skill_name=self.validated_data['skill_name']
+                skill_name=self.validated_data['skill_name'],
+                category_id=self.validated_data['category_id']
 
             )
             return skills
