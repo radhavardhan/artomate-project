@@ -17,7 +17,7 @@ class Skill_view(APIView):
 
     def get(self, request):
         skills = Const_skills.objects.all().values('id', 'skill_name', 'skill_code')
-        print(skills)
+        # print(skills)
         data = {}
         data['skills'] = skills
         return Response(data)

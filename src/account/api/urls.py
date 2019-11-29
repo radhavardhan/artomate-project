@@ -1,5 +1,6 @@
-from django.urls import path
-from django.conf.urls import url
+from django.urls import path, reverse
+# from django.conf.urls import url
+# from orca.sound import args
 from rest_framework.authtoken.views import obtain_auth_token
 from account.api.views import (
     registration_view,
@@ -24,7 +25,8 @@ urlpatterns = [
     path('postproject',projectview.Projects.as_view()),
     path('home',projectview.AllProjects.as_view()),
     path('projects_on_skills/<str:skill_code>', projectview.ProjectOnSkill.as_view()),
-    path('projects_on_skills/<str:*args>', projectview.ProjectOnSkill1.as_view()),
+    path('projects_on_skills/<str:skill_code1>/<str:skill_code2>', projectview.ProjectOnSkill1.as_view()),
+    # reverse('projects_on_skills',projectview.ProjectOnSkill1.as_view(), *args),
 
              # Skill view
     path('skills', skillview.Const_Skill_Add.as_view()),
@@ -47,7 +49,8 @@ urlpatterns = [
 
         # bid view
     path('bidproject',bidview.BidRequest.as_view()),
-    path('totalbid',bidview.No_Of_Bid.as_view()),
+
+    path('biddetailsofproject/<str:project_code>',bidview.No_Of_Bid.as_view()),
 
     path('testjson', views.TestJson.as_view()),
 

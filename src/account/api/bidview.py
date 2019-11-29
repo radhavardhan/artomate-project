@@ -7,7 +7,7 @@ from rest_framework.status import (
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from account.models import PostProject,Bidproject
+from account.models import PostProject,Bidproject,Account
 from account.api.serializers import  BidProjectSerializer
 
 class BidRequest(APIView):
@@ -54,10 +54,21 @@ class BidRequest(APIView):
 
 
 class No_Of_Bid(APIView):
-    def get(self, request):
-        project_id = request.data['project_id']
+    def get(self, request,project_code):
+
         data = {}
-        data['Total number of bids for project'] = Bidproject.objects.filter(project_id=project_id).count()
-        data['Project name'] = Bidproject.objects.filter(project_id=project_id).values(
-            'project_name')
+        data['Total number of bids on project'] = Bidproject.objects.filter(project_code=project_code).count()
+        Project_Details = Bidproject.objects.filter(project_code=project_code).values('project_name','bid_amount','email','user_id')
+        mylist = list(Project_Details)
+        Bid_project_details=[]
+        for i in mylist:
+            user_id=i['user_id']
+            bid_username = Account.objects.filter(id=user_id).values('username')
+            # print(user_id)
+            Bid_project_details.append(i)
+            Bid_project_details.append(bid_username)
+
+
+        data['project'] = list(Bid_project_details)
+
         return Response(data)
