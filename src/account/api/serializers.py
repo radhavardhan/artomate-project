@@ -1,8 +1,19 @@
+import datetime
+
 from django.contrib.auth.models import User
+from jwt.compat import text_type
+
 from rest_framework import serializers
-from django.contrib.auth import authenticate
-from django.db.models import Max
+
 from rest_framework.authtoken.models import Token
+
+
+from django.utils.six import text_type
+
+
+
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+
 from account.models import Account,KycInfo,Categories,PostProject,Userprofile,SubCategory,Skills,Bidproject,No_of_bids_for_project,Const_skills
 
 
@@ -22,6 +33,7 @@ class RegistrationSerializer(serializers.ModelSerializer):
         account = Account(
             email=self.validated_data['email'],
             username=self.validated_data['username'],
+
         )
 
         password = self.validated_data['password']
@@ -106,15 +118,6 @@ class PostProjectSerializer(serializers.ModelSerializer):
             return project
 
 
-        # def no_of_Bid(self):
-        #     bid = No_of_bids_for_project.objects.filter(project=self)
-        #     count_of_bid = bid.aggregate(Max('no_of_bid'))
-        #     noofbid = NoOfBidProjectSerializer
-        #     noofbid.project_code = bid.project_code
-        #     noofbid.project_name = bid.project_name
-        #     noofbid.no_of_bid = count_of_bid
-        #     noofbid.save()
-        #     return noofbid
 
 class NoOfBidProjectSerializer(serializers.ModelSerializer):
     class Meta:
@@ -177,3 +180,69 @@ class BidProjectSerializer(serializers.ModelSerializer):
             )
             return bids
 
+
+class TokenObtainPairPatchedSerializer(TokenObtainPairSerializer):
+    def to_representation(self, instance):
+        data = {}
+        # data = super(TokenObtainPairPatchedSerializer, self).to_representation(instance)
+        # r.update({'user': self.user.username})
+
+        data['done']="done"
+
+        return data
+
+USER_LIFETIME = datetime.timedelta(minutes=1)
+
+
+class MyTokenObtainSerializer(TokenObtainPairSerializer):
+    def validate(self, attrs):
+        data = super(TokenObtainPairSerializer, self).validate(attrs)
+        refresh = self.get_token(self.user)
+        data['refresh'] = text_type(refresh)
+        if self.user.is_superuser:
+            new_token = refresh.access_token
+            # new_token.set_exp(lifetime=USER_LIFETIME)
+            data['access'] = text_type(new_token)
+            postpro = KycInfo.objects.filter(userid=self.user.id)
+            if postpro.exists():
+                for kyc in postpro:
+                    if kyc.kycstatus == 1:
+                        data['kyc_message'] = 'kyc details uploaded'
+                        data['kyc_status'] = 1
+                    elif kyc.kycstatus == 2:
+                        data['kyc_message'] = 'kyc details pending'
+                        data['kyc_status'] = 2
+                    elif kyc.kycstatus == 3:
+                        data['kyc_message'] = 'kyc details approved'
+                        data['kyc_status'] = 3
+                    elif kyc.kycstatus == 4:
+                        data['kyc_message'] = 'kyc details rejected'
+                        data['kyc_status'] = 4
+
+            else:
+                data['kyc_message'] = 'kyc details not entered'
+                data['kyc_status'] = 0
+        else:
+            data['access'] = text_type(refresh.access_token)
+            postpro = KycInfo.objects.filter(userid=self.user.id)
+            if postpro.exists():
+                for kyc in postpro:
+                    if kyc.kycstatus == 1:
+                        data['kyc_message'] = 'kyc details uploaded'
+                        data['kyc_status'] = 1
+                    elif kyc.kycstatus == 2:
+                        data['kyc_message'] = 'kyc details pending'
+                        data['kyc_status'] = 2
+                    elif kyc.kycstatus == 3:
+                        data['kyc_message'] = 'kyc details approved'
+                        data['kyc_status'] = 3
+                    elif kyc.kycstatus == 4:
+                         data['kyc_message'] = 'kyc details rejected'
+                         data['kyc_status'] = 4
+
+            else:
+                data['kyc_message'] = 'kyc details not entered'
+                data['kyc_status'] = 0
+
+            #     data['done'] = 'jwt'
+        return data

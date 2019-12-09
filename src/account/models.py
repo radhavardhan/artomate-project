@@ -1,3 +1,4 @@
+from django.core.validators import RegexValidator
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
 # from django.utils import simplejson as json
@@ -59,6 +60,7 @@ class Account(AbstractBaseUser):
     is_staff = models.BooleanField(default=False)
     is_superuser = models.BooleanField(default=False)
     is_freelancer = models.IntegerField(default=False)
+    # phone = models.IntegerField(default=False)
 
 
     USERNAME_FIELD = 'email'
@@ -108,7 +110,6 @@ class SubCategory(models.Model):
 class Skills(models.Model):
     skill_id = models.IntegerField(blank=True)
     skill_name = models.CharField(max_length=30,blank=True)
-
     project_id =models.IntegerField()
 
 class Currency(models.Model):
@@ -147,7 +148,7 @@ class PostProject(models.Model):
     currency_id = models.IntegerField(default=None)
     min = models.IntegerField(null=True)
     max=models.IntegerField(null=True)
-    custom_budget = models.IntegerField()
+    custom_budget = models.IntegerField(null=True)
     project_deadline = models.DateField()
     experience_required =models.CharField(max_length= 100)
     country_id = models.CharField(max_length= 100)
@@ -202,6 +203,18 @@ class Json_data(models.Model):
     skill = JSONField()
     skillcode=models.CharField(max_length=30)
 
+class Phone_OTP(models.Model):
+    phone_regex = RegexValidator(regex = r'\+?1?\d{9,14}$',message="phone number must be entered in sollowing way" )
+    phone =models.CharField(validators=[phone_regex],max_length=17,unique=True)
+    otp = models.CharField(max_length=9,blank=True,null=True)
+    count = models.IntegerField(default=0,help_text='number of otp sent')
+
+    def __str__(self):
+        return str(self.phone) + 'is sent' + str(self.otp)
+
+
+class Experiance(models.Model):
+    Exp_name = models.CharField(max_length=30)
 
 
 

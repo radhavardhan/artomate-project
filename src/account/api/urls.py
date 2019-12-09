@@ -7,24 +7,41 @@ from account.api.views import (
 
 
 )
+from rest_framework_simplejwt.views import TokenObtainPairView,TokenRefreshView
 
-from account.api import views, KycView,projectview,skillview,categoryview,bidview
+from account.api import views, KycView,projectview,skillview,categoryview,bidview,send_otp
 
 app_name = 'account'
 
 urlpatterns = [
+
+    path('token',TokenObtainPairView.as_view()),
+    path('token/refresh',TokenRefreshView.as_view()),
+    path('jwt_test',views.MyTokenObtainView.as_view()),
+    path('jwt_test/refresh',TokenRefreshView.as_view()),
+
+
     path('register', registration_view, name="register"),
     path('login', login),
     path('dashboard', views.DashboardView.as_view()),
 
+            #OTP
+    path('sendotp',views.ValidatePhoneSendOTP.as_view()),
+    path('twiliosendotp', send_otp.TWILIOSendOTP.as_view()),
+
             # Kyc View
     path('kyc',KycView.KycView.as_view()),
+
+            #country and experiance
+    path('country',KycView.CountryView.as_view()),
+    path('experience',KycView.ExperianceView.as_view()),
 
                 # Projects view
     path('postproject',projectview.Projects.as_view()),
     path('home',projectview.AllProjects.as_view()),
     path('projects_on_skills/<str:skill_code>', projectview.ProjectOnSkill.as_view()),
-    path('projects_on_skills/<str:*args>', projectview.ProjectOnSkill1.as_view()),
+    path('projects_on_skills/<str:skill_code1>/<str:skill_code2>', projectview.ProjectOnSkill1.as_view()),
+    # reverse('projects_on_skills',projectview.ProjectOnSkill1.as_view(), *args),
 
              # Skill view
     path('skills', skillview.Const_Skill_Add.as_view()),
@@ -47,10 +64,12 @@ urlpatterns = [
 
         # bid view
     path('bidproject',bidview.BidRequest.as_view()),
-    path('totalbid',bidview.No_Of_Bid.as_view()),
+
+    path('biddetailsofproject/<str:project_code>',bidview.No_Of_Bid.as_view()),
 
     path('testjson', views.TestJson.as_view()),
 
     # url(r'^projects_on_skills/(?P<skill_code>\w+)$', views.ProjectOnSkill1.as_view()),
+
 
 ]

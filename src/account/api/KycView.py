@@ -7,8 +7,9 @@ from rest_framework.status import (
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from account.models import KycInfo
+from account.models import KycInfo,country,Experiance
 from account.api.serializers import  KYCInfoSerializer
+
 
 class KycView(APIView):
     permission_classes = (IsAuthenticated,)
@@ -40,4 +41,20 @@ class KycView(APIView):
                 else:
                     data['status'] = 0
                     data = serializer.errors
+        return Response(data)
+
+
+
+class CountryView(APIView):
+    def get(self, request):
+        country1 = country.objects.all().values('id','country_name')
+        data = {}
+        data['countries'] = country1
+        return Response(data)
+
+class ExperianceView(APIView):
+    def get(self, request):
+        exp = Experiance.objects.all().values('id','Exp_name')
+        data = {}
+        data['experiance'] = exp
         return Response(data)

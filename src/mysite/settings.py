@@ -9,7 +9,7 @@ https://docs.djangoproject.com/en/2.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/2.2/ref/settings/
 """
-
+import datetime
 import os
 import os
 from decouple import config
@@ -59,11 +59,22 @@ AUTH_USER_MODEL = 'account.Account'
 
 
 REST_FRAMEWORK = {
+
+    # 'DEFAULT_PERMISSION_CLASSES': (
+    #     'rest_framework.permissions.IsAuthenticated',
+    #     ),
+
    'DEFAULT_AUTHENTICATION_CLASSES': (
-       # 'rest_framework_simplejwt.authentication.JWTAuthentication',
-       'rest_framework.authentication.TokenAuthentication',
+       'rest_framework_simplejwt.authentication.JWTAuthentication',
+       # 'rest_framework.authentication.TokenAuthentication',
    ),
+
 }
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': datetime.timedelta(minutes=5),
+}
+#
+# JWT_AUTH = {    'JWT_VERIFY': True,    'JWT_VERIFY_EXPIRATION': True,    'JWT_EXPIRATION_DELTA': datetime.timedelta(seconds=3000),    'JWT_AUTH_HEADER_PREFIX': 'Bearer',}
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -193,4 +204,3 @@ STATIC_URL = '/static/'
 MEDIA_URL = '/media/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'static_cdn')
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media_cdn')
-

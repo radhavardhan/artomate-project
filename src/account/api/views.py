@@ -12,13 +12,14 @@ from django.template.loader import render_to_string
 
 from django.contrib.auth.tokens import default_token_generator
 
-import random
+import random,jwt
 import string
 from django.conf import settings
 from django.db.models import Max, Q, Count
 
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.authentication import authenticate
 from rest_framework.status import (
     HTTP_400_BAD_REQUEST,
     HTTP_404_NOT_FOUND,
@@ -27,9 +28,12 @@ from rest_framework.status import (
 from django.contrib.auth import authenticate
 from rest_framework.authtoken.models import Token
 from rest_framework.utils import json
+import jwt
+from rest_framework_simplejwt.views import TokenObtainPairView
 
+from account.api import serializers
 from account.models import KycInfo, Account, Categories, PostProject, Userprofile, SubCategory, Skills, Budgets, \
-    Bidproject, No_of_bids_for_project, Const_skills, Json_data
+    Bidproject, No_of_bids_for_project, Const_skills, Json_data,Phone_OTP
 
 from rest_framework.views import APIView
 from django.core.mail import send_mail
@@ -42,9 +46,8 @@ from account.token import account_activation_token
 from django.contrib.auth.models import User, Group
 from django.core.mail import EmailMessage
 
-from account.api.serializers import RegistrationSerializer, LoginSerializer, KYCInfoSerializer, CategoriesSerializer, \
-    BidProjectSerializer, PostProjectSerializer, UserProfileSerializer, SubCategorySerializer, Const_SkillSerializer, \
-    NoOfBidProjectSerializer
+from account.api.serializers import RegistrationSerializer, LoginSerializer, \
+       UserProfileSerializer,MyTokenObtainSerializer
 
 from random import choice
 from string import ascii_lowercase, digits, hexdigits
@@ -96,6 +99,16 @@ def login(request):
     user = authenticate(username=username, password=password)
     if not user:
         return Response({'error': 'Invalid Credentials'}, status=HTTP_200_OK)
+    # payload = {
+    #     'password': user.password,
+    #     'email': user.email,
+    # }
+    # # token = {'token': jwt.encode(payload, "SECRET_KEY")}
+    # token = jwt.encode(payload, 'secret', algorithm='HS256')
+    # print(token)
+    # token_decode=jwt.decode(token, 'secret', algorithms=['HS256'])
+    # print(token_decode)
+
     token, _ = Token.objects.get_or_create(user=user)
     postpro = KycInfo.objects.filter(userid=user.id)
     if postpro.exists():
@@ -164,7 +177,6 @@ class ProfileVeiw(APIView):
         user_id = user.id
         profile = Userprofile.objects.filter(userid=user_id).values()
         return JsonResponse({"profile": list(profile)})
-
 
 
 
@@ -257,3 +269,88 @@ class Skill_view(APIView):
         data = {}
         data['skills'] = skills
         return Response(data)
+
+
+class ValidatePhoneSendOTP(APIView):
+
+
+    def post(self,request,*args,**kwargs):
+        phone_number = request.data['phone']
+        if phone_number:
+            phone1=str(phone_number)
+            user =Account.objects.filter(phone=phone1)
+            if user.exists():
+                return  Response({
+                    'status':False,
+                    'detail':"phone number allready exists"
+                })
+            else:
+                print('hi')
+                key= self.send_otp(phone_number)
+                if key:
+                    old=Phone_OTP.objects.filter(phone=phone_number)
+                    if old.exists():
+                        old=old.first()
+                        count=old.count
+                        if count>10:
+                            return Response({
+                                'status':False,
+                                'datail':'sending otp error ,limit exceeded'
+                            })
+                        old.count=count+1
+                        old.save()
+                        print("count increase" ,count)
+                        return Response({
+                            'sataus':True,
+                            'detail':'OTP sent successfully'
+                        })
+                    else:
+                        print('key genareated')
+                        Phone_OTP.objects.create(
+                            phone=phone_number,
+                            otp=key,
+                        )
+                        return Response({
+                            'status':True,
+                            'detail':'otp sent seccessfully'
+                        })
+                else:
+                    return ({
+                        'status':False,
+                        'detail':'sending otp error'
+                    })
+
+
+
+        else:
+            return Response({
+                'status':False,
+                'detail':"phone number not given"
+            } )
+
+
+    def send_otp(self,phone_number):
+        print('send otp method')
+        if phone_number:
+
+            key = random.randint(999, 9999)
+            return key
+        else:
+            return False
+
+
+class TokenObtainPairPatchedView(TokenObtainPairView):
+
+    """
+    Takes a set of user credentials and returns an access and refresh JSON web
+    token pair to prove the authentication of those credentials.
+    """
+    serializer_class = serializers.TokenObtainPairPatchedSerializer
+
+    token_obtain_pair = TokenObtainPairView.as_view()
+
+
+
+
+class MyTokenObtainView(TokenObtainPairView):
+    serializer_class = MyTokenObtainSerializer
