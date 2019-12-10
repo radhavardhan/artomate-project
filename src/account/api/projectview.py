@@ -37,7 +37,7 @@ class AllProjects(APIView):
 
 
 class Projects(APIView):
-    # permission_classes = (IsAuthenticated,)
+    permission_classes = (IsAuthenticated,)
 
     def post(self, request):
         if request.method == 'POST':
@@ -53,7 +53,9 @@ class Projects(APIView):
             serializer = PostProjectSerializer(data=request.data)
             if postproject1.exists():
                 for var in postproject1:
-                    if var.project_title in string1:
+                    # print("executing this 1")
+                    if var.project_title == string1:
+                        # print("executing this 2")
                         project_title12 = project_title1
                         if serializer.is_valid():
                             pro = serializer.save()
@@ -75,7 +77,7 @@ class Projects(APIView):
                             data = serializer.errors
                         return Response(data)
 
-                # print('no')
+                # print("executing this 3")
                 project_title2 = project
                 # print(project_title2)
                 if serializer.is_valid():
@@ -97,7 +99,7 @@ class Projects(APIView):
                 return Response(data)
 
             else:
-                print("executing this 4")
+                # print("executing this 4")
                 project_title2 = project
                 if serializer.is_valid():
                     pro = serializer.save()
@@ -106,8 +108,7 @@ class Projects(APIView):
                     pro.username = user.username
                     pro.route = project_title2
                     pro.save()
-                    postproject1 = pro.id
-                    # postproject1 = PostProject.objects.get(userid=user.id)
+
                     project_id = pro.id
                     skillname = request.data['skills']
                     # print(skillname)
