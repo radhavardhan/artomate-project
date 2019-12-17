@@ -28,6 +28,7 @@ urlpatterns = [
             #OTP
     path('sendotp',views.ValidatePhoneSendOTP.as_view()),
     path('twiliosendotp', send_otp.TWILIOSendOTP.as_view()),
+    # path('otp',send_otp.SendOtp.as_view()),
 
             # Kyc View
     path('kyc',KycView.KycView.as_view()),
@@ -64,8 +65,9 @@ urlpatterns = [
 
         # bid view
     path('bidproject',bidview.BidRequest.as_view()),
-
-    path('biddetailsofproject/<str:project_code>',bidview.No_Of_Bid.as_view()),
+    # path('projectsbidview',bidview.ProjectsBidViews.as_view()),
+    path('norofbidforproject',bidview.No_Of_Bid.as_view()),
+    path('biddetailsofproject/<str:projectcode>',bidview.Bid_Details_Project.as_view()),
 
     path('testjson', views.TestJson.as_view()),
 

@@ -170,13 +170,14 @@ class Const_SkillSerializer(serializers.ModelSerializer):
 class BidProjectSerializer(serializers.ModelSerializer):
     class Meta:
         model = Bidproject
-        fields = ('project_code', 'project_name', 'bid_amount', 'user_id', 'email','project_id')
+        fields = ('project_code', 'project_name', 'bid_amount', 'user_id', 'email','project_id','completion_time')
 
         def save(self):
             bids = Bidproject(
                 project_code=self.validated_data['project_code'],
                 bid_amount=self.validated_data['bid_amount'],
                 email=self.validated_data['email'],
+                completion_time=self.validated_data['completion_time']
             )
             return bids
 
@@ -191,7 +192,7 @@ class TokenObtainPairPatchedSerializer(TokenObtainPairSerializer):
 
         return data
 
-USER_LIFETIME = datetime.timedelta(minutes=1)
+USER_LIFETIME = datetime.timedelta(days=30)
 
 
 class MyTokenObtainSerializer(TokenObtainPairSerializer):
@@ -201,8 +202,10 @@ class MyTokenObtainSerializer(TokenObtainPairSerializer):
         data['refresh'] = text_type(refresh)
         if self.user.is_superuser:
             new_token = refresh.access_token
-            # new_token.set_exp(lifetime=USER_LIFETIME)
+            new_token.set_exp(lifetime=USER_LIFETIME)
             data['access'] = text_type(new_token)
+
+
             postpro = KycInfo.objects.filter(userid=self.user.id)
             if postpro.exists():
                 for kyc in postpro:
@@ -219,11 +222,14 @@ class MyTokenObtainSerializer(TokenObtainPairSerializer):
                         data['kyc_message'] = 'kyc details rejected'
                         data['kyc_status'] = 4
 
+
             else:
                 data['kyc_message'] = 'kyc details not entered'
                 data['kyc_status'] = 0
+
         else:
             data['access'] = text_type(refresh.access_token)
+
             postpro = KycInfo.objects.filter(userid=self.user.id)
             if postpro.exists():
                 for kyc in postpro:
@@ -244,5 +250,6 @@ class MyTokenObtainSerializer(TokenObtainPairSerializer):
                 data['kyc_message'] = 'kyc details not entered'
                 data['kyc_status'] = 0
 
-            #     data['done'] = 'jwt'
+        data['user details'] = self.user.email
+
         return data

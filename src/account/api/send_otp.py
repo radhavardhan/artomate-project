@@ -2,6 +2,7 @@ import os,random
 from twilio.rest import Client
 from rest_framework.views import APIView
 from rest_framework.response import Response
+# import zerosms
 
 
 class TWILIOSendOTP(APIView):
@@ -22,5 +23,18 @@ class TWILIOSendOTP(APIView):
             body =OTP,
         )
         return Response('done')
+
+
+# class SendOtp(APIView):
+#     def post(self,request):
+#         phone_number = request.data['phone']
+#         key = random.randint(999, 9999)
+#         OTP = 'your Otp is  ' + str(key)
+#
+#         zerosms.sms(message='your Otp is  ' + str(key), receivernum=phone_number)
+#         return Response('done')
+#
+
+
 
 

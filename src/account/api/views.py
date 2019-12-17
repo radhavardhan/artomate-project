@@ -15,7 +15,7 @@ from django.contrib.auth.tokens import default_token_generator
 import random,jwt
 import string
 from django.conf import settings
-from django.db.models import Max, Q, Count
+from django.db.models import Max, Q, Count, Sum
 
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -137,13 +137,20 @@ class DashboardView(APIView):
         user = request.user
         name = user.username
         id = user.id
-        print(id)
-        profile = Userprofile.objects.filter(userid=id).values()
-        print(profile)
+        # print(id)
+
+        Biddetails = Bidproject.objects.filter(user_id=id).count()
+        totalbid = Bidproject.objects.filter(user_id=id).aggregate(Sum('bid_amount'))
+        # print(totalbid)
 
         data = {
-            "username": request.user.username,
-            "email": request.user.email
+            "username":  name,
+            "email": request.user.email,
+            "No Of Bids":Biddetails,
+            "Task Bids Won":5,
+            "Reviews":2,
+            "Completed jobs":1,
+            "Monthly Earnimngs":totalbid
         }
         return JsonResponse(data)
 
@@ -339,18 +346,12 @@ class ValidatePhoneSendOTP(APIView):
             return False
 
 
-class TokenObtainPairPatchedView(TokenObtainPairView):
-
-    """
-    Takes a set of user credentials and returns an access and refresh JSON web
-    token pair to prove the authentication of those credentials.
-    """
-    serializer_class = serializers.TokenObtainPairPatchedSerializer
-
-    token_obtain_pair = TokenObtainPairView.as_view()
-
 
 
 
 class MyTokenObtainView(TokenObtainPairView):
     serializer_class = MyTokenObtainSerializer
+
+
+
+

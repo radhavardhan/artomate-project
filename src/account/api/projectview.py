@@ -143,7 +143,7 @@ class ProjectOnSkill(APIView):
 
 
 class ProjectOnSkill1(APIView):
-    print(123445)
+    # print(123445)
 
     def get(self, request, *args):
         print(124)

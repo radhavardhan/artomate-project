@@ -175,6 +175,7 @@ class Dashboard(models.Model):
     wallet = models.IntegerField()
     feedback_reviews=models.CharField(max_length=40)
 
+
 class Bidproject(models.Model):
     project_id = models.IntegerField(default =None,blank =True)
     project_code = models.CharField(max_length = 30, default =None , null=True)
@@ -183,7 +184,7 @@ class Bidproject(models.Model):
     user_id=models.IntegerField(default=None,null=True)
     email = models.EmailField(verbose_name="email", max_length=60)
     no_of_bid = models.IntegerField(default=None,null =True)
-    # total_bids=models.
+    completion_time=models.TextField(max_length=300, default=None)
 
 class No_of_bids_for_project(models.Model):
     project_code = models.CharField(max_length=30, default=None, null=True)

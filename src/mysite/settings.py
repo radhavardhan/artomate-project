@@ -114,6 +114,9 @@ EMAIL_PORT = 2525
 
 WSGI_APPLICATION = 'mysite.wsgi.application'
 
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': datetime.timedelta(days=1),
+}
 
 
 # Database
