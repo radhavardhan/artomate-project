@@ -1,3 +1,4 @@
+from rest_framework.decorators import permission_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.status import (
     HTTP_400_BAD_REQUEST,
@@ -7,8 +8,8 @@ from rest_framework.status import (
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from account.models import PostProject, Bidproject, Account
-from account.api.serializers import BidProjectSerializer
+from account.models import PostProject, Bidproject, Account,Hirer_bid_select
+from account.api.serializers import BidProjectSerializer,HirerSelectBidSerializer
 import json
 
 
@@ -19,6 +20,7 @@ class BidRequest(APIView):
         if request.method == 'POST':
             user = request.user
             id = user.id
+
             data = {}
             project_code = request.data['project_code']
             project_bid = PostProject.objects.get(project_code=project_code)
@@ -67,6 +69,7 @@ class No_Of_Bid(APIView):
         # print(projects_posted)
         for var in projects_posted:
             numberofbids = Bidproject.objects.filter(project_id=var['id']).count()
+            print(numberofbids)
             bidu_ser_id = Bidproject.objects.filter(project_id=var['id']).values('id', 'user_id')
             mylist.append(var['route'])
             mylist.append(numberofbids)
@@ -81,17 +84,55 @@ class No_Of_Bid(APIView):
 class Bid_Details_Project(APIView):
     permission_classes = (IsAuthenticated,)
 
+
+
     def get(self, request, projectcode):
+
         print(projectcode)
+        if not permission_classes:
+            return Response({'error': 'Invalid Credentials'}, status=HTTP_200_OK)
+        else:
 
-        projects_posted = PostProject.objects.filter(project_code=projectcode).values( 'route', 'project_deadline','min','max')
-        biddeatils =Bidproject.objects.filter(project_code=projectcode).values('bid_amount','user_id','completion_time','email')
-        norofbid=Bidproject.objects.filter(project_code=projectcode).count()
-        for var in biddeatils:
+            projects_posted = PostProject.objects.filter(project_code=projectcode).values( 'id','route', 'project_deadline','min','max')
+            biddeatils =Bidproject.objects.filter(project_code=projectcode).values('bid_amount','user_id','completion_time','email')
+            norofbid=Bidproject.objects.filter(project_code=projectcode).count()
+            for var in biddeatils:
 
+                data={}
+                data['project']=projects_posted
+                data['no_of_bid']=norofbid
+                data['bid details']=biddeatils
+                # data['user details']=Account.objects.filter(id=var['user_id']).values('username')
+            return Response(data)
+
+
+
+class Select_Bid(APIView):
+    permission_classes = (IsAuthenticated,)
+
+    def post(self,request):
+        if request.method=='POST':
+            projectid=request.data['project_id']
+            projectcheck = Hirer_bid_select.objects.filter(project_id=projectid)
             data={}
-            data['project']=projects_posted
-            data['no_of_bid']=norofbid
-            data['bid details']=biddeatils
-            data['user details']=Account.objects.filter(id=var['user_id']).values('username')
-        return Response(data)
+            if projectcheck.exists():
+                data['result'] = 'Allready freelancer selected for project'
+                data['status'] = 0
+            else:
+                projectroute = PostProject.objects.get(id=projectid)
+                print(projectroute)
+                serializer=HirerSelectBidSerializer(data=request.data)
+                if serializer.is_valid():
+                    print(123)
+                    selectedbid=serializer.save()
+                    selectedbid.project_route = projectroute.route
+                    selectedbid.hirer_email_id = request.user.email
+                    selectedbid.save()
+                    data['result'] = "sucess"
+                    data['status'] = 1
+                else:
+                    data['error'] = serializer.errors
+                    data['status'] = 0
+
+            return Response(data)
+

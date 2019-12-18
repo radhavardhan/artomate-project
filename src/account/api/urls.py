@@ -41,7 +41,7 @@ urlpatterns = [
     path('postproject',projectview.Projects.as_view()),
     path('home',projectview.AllProjects.as_view()),
     path('projects_on_skills/<str:skill_code>', projectview.ProjectOnSkill.as_view()),
-    path('projects_on_skills/<str:skill_code1>/<str:skill_code2>', projectview.ProjectOnSkill1.as_view()),
+    path('projects_on_skills2/<str:skill_code1>/<str:skill_code2>', projectview.ProjectOnSkill1.as_view()),
     # reverse('projects_on_skills',projectview.ProjectOnSkill1.as_view(), *args),
 
              # Skill view
@@ -68,6 +68,7 @@ urlpatterns = [
     # path('projectsbidview',bidview.ProjectsBidViews.as_view()),
     path('norofbidforproject',bidview.No_Of_Bid.as_view()),
     path('biddetailsofproject/<str:projectcode>',bidview.Bid_Details_Project.as_view()),
+    path('selectbid',bidview.Select_Bid.as_view()),
 
     path('testjson', views.TestJson.as_view()),
 

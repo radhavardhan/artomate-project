@@ -1,3 +1,4 @@
+from django.db.models import Q
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.status import (
     HTTP_400_BAD_REQUEST,
@@ -145,20 +146,23 @@ class ProjectOnSkill(APIView):
 class ProjectOnSkill1(APIView):
     # print(123445)
 
-    def get(self, request, *args):
-        print(124)
-        value = args
-        print(value)
-        data = {}
-        data['skill_code'] = value
-
-        # projects = PostProject.objects.filter(skills=skill1).values('project_title')
+    def get(self, request,skill_code1, skill_code2):
+        skill1=skill_code1
+        skill2=skill_code2
+        # projects = Skills.objects.filter(skills=skill1).values('project_title')
         # print(projects)
         # projects1 = PostProject.objects.filter(skill1=skill2).values('project_title')
         # print(projects1)
+        data={}
 
-        # value = PostProject.objects.filter(Q(skills=skill1) | Q(skill1=skill2)).values()
+        value = Skills.objects.filter(Q(skill_id=skill1) | Q(skill_id=skill2)).values('project_id')
 
-        # data['response'] = value
+        mylist=[]
+        for var in value:
+            projects = PostProject.objects.filter(id=var['project_id']).values('project_title','route','project_code')
+            print(projects)
+            mylist.append(projects)
+
+        data['projects'] = mylist
 
         return Response(data)

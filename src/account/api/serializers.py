@@ -1,7 +1,9 @@
 import datetime
 
+from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
 from jwt.compat import text_type
+from requests import Response
 
 from rest_framework import serializers
 
@@ -9,12 +11,11 @@ from rest_framework.authtoken.models import Token
 
 
 from django.utils.six import text_type
-
-
+from rest_framework.status import HTTP_400_BAD_REQUEST, HTTP_200_OK
 
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
-from account.models import Account,KycInfo,Categories,PostProject,Userprofile,SubCategory,Skills,Bidproject,No_of_bids_for_project,Const_skills
+from account.models import Account,KycInfo,Categories,PostProject,Userprofile,SubCategory,Skills,Bidproject,No_of_bids_for_project,Const_skills,Hirer_bid_select
 
 
 class RegistrationSerializer(serializers.ModelSerializer):
@@ -181,22 +182,49 @@ class BidProjectSerializer(serializers.ModelSerializer):
             )
             return bids
 
+class HirerSelectBidSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Hirer_bid_select
+        fields=('hirer_email_id', 'project_id', 'project_route', 'freelancer_email_id','message')
+        def save(self):
+            bidselect=Hirer_bid_select(
 
-class TokenObtainPairPatchedSerializer(TokenObtainPairSerializer):
-    def to_representation(self, instance):
-        data = {}
-        # data = super(TokenObtainPairPatchedSerializer, self).to_representation(instance)
-        # r.update({'user': self.user.username})
+                project_id=self.validated_data['project_id'],
+                freelancer_email_id=self.validated_data['freelancer_email_id'],
+                message=self.validated_data['message']
 
-        data['done']="done"
+            )
+            return bidselect
 
-        return data
+
+#
+# class TokenObtainPairPatchedSerializer(TokenObtainPairSerializer):
+#     def to_representation(self, instance):
+#         data = {}
+#         # data = super(TokenObtainPairPatchedSerializer, self).to_representation(instance)
+#         # r.update({'user': self.user.username})
+#
+#         data['done']="done"
+#
+#         return data
 
 USER_LIFETIME = datetime.timedelta(days=30)
 
 
 class MyTokenObtainSerializer(TokenObtainPairSerializer):
     def validate(self, attrs):
+        print(attrs)
+        username = attrs['email']
+        password = attrs['password']
+        print("===========")
+        print(username)
+        print(password)
+        if username is None or password is None:
+            return Response({'error': 'Please provide both email and password'},
+                            status=HTTP_400_BAD_REQUEST)
+        user = authenticate(username=username, password=password)
+        if not user:
+            return Response({'error': 'Invalid Credentials'}, status=HTTP_200_OK)
         data = super(TokenObtainPairSerializer, self).validate(attrs)
         refresh = self.get_token(self.user)
         data['refresh'] = text_type(refresh)
@@ -253,3 +281,6 @@ class MyTokenObtainSerializer(TokenObtainPairSerializer):
         data['user details'] = self.user.email
 
         return data
+
+
+

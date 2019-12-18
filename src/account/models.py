@@ -85,8 +85,8 @@ class KycInfo(models.Model):
     fullname = models.CharField(max_length=100)
     dob = models.DateField()
     mobile = models.CharField(max_length=17)
-    idprooffront = models.ImageField(upload_to='pictures/')
-    idproofback = models.ImageField(upload_to='pictures/')
+    idprooffront = models.ImageField(upload_to='')
+    idproofback = models.ImageField(upload_to='')
     kycstatus = models.IntegerField(null=True)
     username = models.CharField(max_length =100,default=None, null=True)
 
@@ -160,15 +160,15 @@ class Userprofile(models.Model):
     email = models.EmailField()
     phone = models.BigIntegerField()
     skills = models.TextField()
-    profile = models.ImageField(upload_to='pictures/')
-    cover_photo = models.ImageField(upload_to='pictures/')
+    profile = models.ImageField(upload_to='')
+    cover_photo = models.ImageField(upload_to='')
     country_id = models.CharField(max_length=30)
 
 
 class Dashboard(models.Model):
     name = models.CharField(max_length=30)
     username = models.CharField(max_length=30)
-    profile_pic = models.ImageField(upload_to='pictures/')
+    profile_pic = models.ImageField(upload_to='')
     current_ongoing_jobs = models.CharField(max_length=40)
     completed_recent_projects = models.CharField(max_length=40)
     recommended_jobs = models.CharField(max_length=40)
@@ -216,6 +216,15 @@ class Phone_OTP(models.Model):
 
 class Experiance(models.Model):
     Exp_name = models.CharField(max_length=30)
+
+class Hirer_bid_select(models.Model):
+    hirer_email_id = models.EmailField(default=None)
+    project_id =models.IntegerField(unique=True)
+    project_route=models.CharField(max_length=60,default=None)
+    freelancer_email_id = models.EmailField()
+    message=models.CharField(max_length=60)
+
+
 
 
 

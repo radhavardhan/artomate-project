@@ -138,6 +138,9 @@ class DashboardView(APIView):
         name = user.username
         id = user.id
         # print(id)
+        # >> > duplicates = User.objects.values(
+        #     'first_name'
+        # ).annotate(name_count=Count('first_name')).filter(name_count__gt=1)
 
         Biddetails = Bidproject.objects.filter(user_id=id).count()
         totalbid = Bidproject.objects.filter(user_id=id).aggregate(Sum('bid_amount'))
@@ -350,7 +353,20 @@ class ValidatePhoneSendOTP(APIView):
 
 
 class MyTokenObtainView(TokenObtainPairView):
-    serializer_class = MyTokenObtainSerializer
+    # def post(self,request):
+    #     username = request.data.get("email")
+    #     password = request.data.get("password")
+    #     if username is None or password is None:
+    #         return Response({'error': 'Please provide both email and password'},
+    #                         status=HTTP_400_BAD_REQUEST)
+    #     user = authenticate(username=username, password=password)
+    #     if not user:
+    #         return Response({'error': 'Invalid Credentials'}, status=HTTP_200_OK)
+
+        serializer_class = MyTokenObtainSerializer
+        # return Response(serializer_class, status=HTTP_200_OK)
+
+
 
 
 
