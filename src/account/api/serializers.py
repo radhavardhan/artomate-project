@@ -1,11 +1,14 @@
 import datetime
 
+
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
+from django.http import JsonResponse
 from jwt.compat import text_type
 from requests import Response
+import json
 
-from rest_framework import serializers
+from rest_framework import serializers, status
 
 from rest_framework.authtoken.models import Token
 
@@ -197,16 +200,6 @@ class HirerSelectBidSerializer(serializers.ModelSerializer):
             return bidselect
 
 
-#
-# class TokenObtainPairPatchedSerializer(TokenObtainPairSerializer):
-#     def to_representation(self, instance):
-#         data = {}
-#         # data = super(TokenObtainPairPatchedSerializer, self).to_representation(instance)
-#         # r.update({'user': self.user.username})
-#
-#         data['done']="done"
-#
-#         return data
 
 USER_LIFETIME = datetime.timedelta(days=30)
 
@@ -219,12 +212,12 @@ class MyTokenObtainSerializer(TokenObtainPairSerializer):
         print("===========")
         print(username)
         print(password)
-        if username is None or password is None:
-            return Response({'error': 'Please provide both email and password'},
-                            status=HTTP_400_BAD_REQUEST)
+
         user = authenticate(username=username, password=password)
+        print(user)
         if not user:
-            return Response({'error': 'Invalid Credentials'}, status=HTTP_200_OK)
+            custom={"Error":"Invalid Credentials","status":"0"}
+            return custom
         data = super(TokenObtainPairSerializer, self).validate(attrs)
         refresh = self.get_token(self.user)
         data['refresh'] = text_type(refresh)
@@ -281,6 +274,3 @@ class MyTokenObtainSerializer(TokenObtainPairSerializer):
         data['user details'] = self.user.email
 
         return data
-
-
-

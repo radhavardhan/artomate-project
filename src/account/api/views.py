@@ -1,4 +1,5 @@
 from django.http import HttpResponse, JsonResponse, Http404
+from django.utils.translation import LANGUAGE_SESSION_KEY
 from rest_framework import status
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.response import Response
@@ -12,7 +13,7 @@ from django.template.loader import render_to_string
 
 from django.contrib.auth.tokens import default_token_generator
 
-import random,jwt
+import random, jwt
 import string
 from django.conf import settings
 from django.db.models import Max, Q, Count, Sum
@@ -25,7 +26,7 @@ from rest_framework.status import (
     HTTP_404_NOT_FOUND,
     HTTP_200_OK
 )
-from django.contrib.auth import authenticate
+from django.contrib.auth import authenticate, user_logged_out
 from rest_framework.authtoken.models import Token
 from rest_framework.utils import json
 import jwt
@@ -33,7 +34,7 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 
 from account.api import serializers
 from account.models import KycInfo, Account, Categories, PostProject, Userprofile, SubCategory, Skills, Budgets, \
-    Bidproject, No_of_bids_for_project, Const_skills, Json_data,Phone_OTP
+    Bidproject, No_of_bids_for_project, Const_skills, Json_data, Phone_OTP
 
 from rest_framework.views import APIView
 from django.core.mail import send_mail
@@ -47,7 +48,7 @@ from django.contrib.auth.models import User, Group
 from django.core.mail import EmailMessage
 
 from account.api.serializers import RegistrationSerializer, LoginSerializer, \
-       UserProfileSerializer,MyTokenObtainSerializer
+    UserProfileSerializer, MyTokenObtainSerializer
 
 from random import choice
 from string import ascii_lowercase, digits, hexdigits
@@ -58,9 +59,11 @@ def registration_view(request):
     user = request.data['username']
 
     if user == 'yes':
-        string2 = ''.join(choice(digits) for i in range(8))
-        string3 = ''.join(choice(ascii_lowercase) for i in range(3))
-        randomstring = 'f' + string2 + string3
+        size=5
+
+        string2 = 'Artomateuser' +''.join(choice(digits) for i in range(5))
+
+        randomstring =  string2
         serializer = RegistrationSerializer(data=request.data)
         data = {}
 
@@ -88,6 +91,14 @@ def registration_view(request):
         return Response(data)
 
 
+def jwt_payload_handler(user):
+    pass
+
+
+def jwt_encode_handler(param):
+    pass
+
+
 @api_view(["POST"])
 @permission_classes((AllowAny,))
 def login(request):
@@ -99,34 +110,38 @@ def login(request):
     user = authenticate(username=username, password=password)
     if not user:
         return Response({'error': 'Invalid Credentials'}, status=HTTP_200_OK)
-    # payload = {
-    #     'password': user.password,
-    #     'email': user.email,
-    # }
-    # # token = {'token': jwt.encode(payload, "SECRET_KEY")}
-    # token = jwt.encode(payload, 'secret', algorithm='HS256')
-    # print(token)
-    # token_decode=jwt.decode(token, 'secret', algorithms=['HS256'])
-    # print(token_decode)
 
-    token, _ = Token.objects.get_or_create(user=user)
+    #
+    # return Response({'token': jwt_encode_handler(jwt_payload_handler(user)),
+    #                  'username': user.username})
+    payload = {
+        'password': user.password,
+        'email': user.email,
+    }
+    # token = {'token': jwt.encode(payload, "SECRET_KEY")}
+    token = jwt.encode(payload, 'secret', algorithm='HS256')
+    print(token)
+    token_decode=jwt.decode(token, 'secret', algorithms=['HS256'])
+    print(token_decode)
+
+    # token, _ = Token.objects.get_or_create(user=user)
     postpro = KycInfo.objects.filter(userid=user.id)
     if postpro.exists():
         for kyc in postpro:
             if kyc.kycstatus == 1:
-                return Response({'token': token.key, 'kyc_message': 'kyc details uploaded', 'kyc_status': 1},
+                return Response({'token': token, 'kyc_message': 'kyc details uploaded', 'kyc_status': 1},
                                 status=HTTP_200_OK)
             elif kyc.kycstatus == 2:
-                return Response({'token': token.key, 'kyc_message': 'kyc details pending', 'kyc_status': 2},
+                return Response({'token': token, 'kyc_message': 'kyc details pending', 'kyc_status': 2},
                                 status=HTTP_200_OK)
             elif kyc.kycstatus == 3:
-                return Response({'token': token.key, 'kyc_message': 'kyc details approved', 'kyc_status': 3},
+                return Response({'token': token, 'kyc_message': 'kyc details approved', 'kyc_status': 3},
                                 status=HTTP_200_OK)
             else:
                 if kyc.kycstatus == 4:
-                    return Response({'token': token.key, 'kyc_message': 'kyc details rejected', 'kyc_status': 4},
+                    return Response({'token': token, 'kyc_message': 'kyc details rejected', 'kyc_status': 4},
                                     status=HTTP_200_OK)
-    return Response({'token': token.key, 'kyc_message': 'kyc details not entered', 'kyc_status': 0},
+    return Response({'token': token, 'kyc_message': 'kyc details not entered', 'kyc_status': 0},
                     status=HTTP_200_OK)
 
 
@@ -137,24 +152,19 @@ class DashboardView(APIView):
         user = request.user
         name = user.username
         id = user.id
-        # print(id)
-        # >> > duplicates = User.objects.values(
-        #     'first_name'
-        # ).annotate(name_count=Count('first_name')).filter(name_count__gt=1)
-
         Biddetails = Bidproject.objects.filter(user_id=id).count()
         totalbid = Bidproject.objects.filter(user_id=id).aggregate(Sum('bid_amount'))
-        # print(totalbid)
-
-        data = {
-            "username":  name,
-            "email": request.user.email,
-            "No Of Bids":Biddetails,
-            "Task Bids Won":5,
-            "Reviews":2,
-            "Completed jobs":1,
-            "Monthly Earnimngs":totalbid
-        }
+        kyc_status = KycInfo.objects.filter(userid=user.id)
+        data = {}
+        data['user_name'] = name
+        data['email']=request.user.email
+        data['no_of_bids'] = Biddetails
+        data['Task Bids Won'] = 5
+        data['Reviews'] = 2
+        data['Completed_jobs'] = 2
+        data['Monthly_Earnings'] = totalbid
+        for var in kyc_status:
+            data['kyc_status'] = var.kycstatus
         return JsonResponse(data)
 
 
@@ -189,15 +199,11 @@ class ProfileVeiw(APIView):
         return JsonResponse({"profile": list(profile)})
 
 
-
-
 @api_view(["GET"])
 def generate(size):
     size = 3
     code = 'PR' + ''.join(random.choice(string.digits + string.ascii_letters[26:]) for _ in range(size))
     return Response(code)
-
-
 
 
 class BudgetsDetails(APIView):
@@ -233,9 +239,6 @@ class UsernameValidate(APIView):
             return Response('Username already taken', status=HTTP_404_NOT_FOUND)
         else:
             return Response('Success', status=HTTP_200_OK)
-
-
-
 
 
 class TestJson(APIView):
@@ -283,36 +286,35 @@ class Skill_view(APIView):
 
 class ValidatePhoneSendOTP(APIView):
 
-
-    def post(self,request,*args,**kwargs):
+    def post(self, request, *args, **kwargs):
         phone_number = request.data['phone']
         if phone_number:
-            phone1=str(phone_number)
-            user =Account.objects.filter(phone=phone1)
+            phone1 = str(phone_number)
+            user = Account.objects.filter(phone=phone1)
             if user.exists():
-                return  Response({
-                    'status':False,
-                    'detail':"phone number allready exists"
+                return Response({
+                    'status': False,
+                    'detail': "phone number allready exists"
                 })
             else:
                 print('hi')
-                key= self.send_otp(phone_number)
+                key = self.send_otp(phone_number)
                 if key:
-                    old=Phone_OTP.objects.filter(phone=phone_number)
+                    old = Phone_OTP.objects.filter(phone=phone_number)
                     if old.exists():
-                        old=old.first()
-                        count=old.count
-                        if count>10:
+                        old = old.first()
+                        count = old.count
+                        if count > 10:
                             return Response({
-                                'status':False,
-                                'datail':'sending otp error ,limit exceeded'
+                                'status': False,
+                                'datail': 'sending otp error ,limit exceeded'
                             })
-                        old.count=count+1
+                        old.count = count + 1
                         old.save()
-                        print("count increase" ,count)
+                        print("count increase", count)
                         return Response({
-                            'sataus':True,
-                            'detail':'OTP sent successfully'
+                            'sataus': True,
+                            'detail': 'OTP sent successfully'
                         })
                     else:
                         print('key genareated')
@@ -321,25 +323,24 @@ class ValidatePhoneSendOTP(APIView):
                             otp=key,
                         )
                         return Response({
-                            'status':True,
-                            'detail':'otp sent seccessfully'
+                            'status': True,
+                            'detail': 'otp sent seccessfully'
                         })
                 else:
                     return ({
-                        'status':False,
-                        'detail':'sending otp error'
+                        'status': False,
+                        'detail': 'sending otp error'
                     })
 
 
 
         else:
             return Response({
-                'status':False,
-                'detail':"phone number not given"
-            } )
+                'status': False,
+                'detail': "phone number not given"
+            })
 
-
-    def send_otp(self,phone_number):
+    def send_otp(self, phone_number):
         print('send otp method')
         if phone_number:
 
@@ -349,25 +350,50 @@ class ValidatePhoneSendOTP(APIView):
             return False
 
 
+class MyTokenObtain(TokenObtainPairView):
 
 
 
-class MyTokenObtainView(TokenObtainPairView):
-    # def post(self,request):
-    #     username = request.data.get("email")
-    #     password = request.data.get("password")
+    #
+    # def validate(self, attrs):
+    #     print(attrs)
+    #     username = attrs['email']
+    #     password = attrs['password']
+    #     print("===========")
+    #     print(username)
+    #     print(password)
     #     if username is None or password is None:
     #         return Response({'error': 'Please provide both email and password'},
     #                         status=HTTP_400_BAD_REQUEST)
     #     user = authenticate(username=username, password=password)
     #     if not user:
     #         return Response({'error': 'Invalid Credentials'}, status=HTTP_200_OK)
-
         serializer_class = MyTokenObtainSerializer
-        # return Response(serializer_class, status=HTTP_200_OK)
 
 
 
+class Logout(APIView):
+    permission_classes = (IsAuthenticated,)
 
+    def get(self, request):
+        user = request.user
+        user = getattr(request, 'user', None)
+        if not getattr(user, 'is_authenticated', True):
+            user = None
+        user_logged_out.send(sender=user.__class__, request=request, user=user)
 
+        # remember language choice saved to session
+        language = request.session.get(LANGUAGE_SESSION_KEY)
 
+        request.session.flush()
+
+        if language is not None:
+            request.session[LANGUAGE_SESSION_KEY] = language
+
+        if hasattr(request, 'user'):
+            from django.contrib.auth.models import AnonymousUser
+            request.user = AnonymousUser()
+
+        print(user.username)
+
+        return Response('done')

@@ -17,12 +17,13 @@ urlpatterns = [
 
     path('token',TokenObtainPairView.as_view()),
     path('token/refresh',TokenRefreshView.as_view()),
-    path('jwt_test',views.MyTokenObtainView.as_view()),
+    path('jwt_test',views.MyTokenObtain.as_view()),
     path('jwt_test/refresh',TokenRefreshView.as_view()),
 
 
     path('register', registration_view, name="register"),
     path('login', login),
+    path('logout',views.Logout.as_view()),
     path('dashboard', views.DashboardView.as_view()),
 
             #OTP
@@ -32,6 +33,7 @@ urlpatterns = [
 
             # Kyc View
     path('kyc',KycView.KycView.as_view()),
+    path('getkyc',KycView.KycStatusView.as_view()),
 
             #country and experiance
     path('country',KycView.CountryView.as_view()),

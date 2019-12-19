@@ -73,11 +73,6 @@ class No_Of_Bid(APIView):
             bidu_ser_id = Bidproject.objects.filter(project_id=var['id']).values('id', 'user_id')
             mylist.append(var['route'])
             mylist.append(numberofbids)
-
-            # for var2 in bidu_ser_id:
-            #     biduserid=var2['user_id']
-            #     # print(biduserid)
-
         return Response(mylist)
 
 
@@ -93,7 +88,7 @@ class Bid_Details_Project(APIView):
             return Response({'error': 'Invalid Credentials'}, status=HTTP_200_OK)
         else:
 
-            projects_posted = PostProject.objects.filter(project_code=projectcode).values( 'id','route', 'project_deadline','min','max')
+            projects_posted = PostProject.objects.filter(project_code=projectcode).values('id', 'route', 'project_deadline','min','max')
             biddeatils =Bidproject.objects.filter(project_code=projectcode).values('bid_amount','user_id','completion_time','email')
             norofbid=Bidproject.objects.filter(project_code=projectcode).count()
             for var in biddeatils:

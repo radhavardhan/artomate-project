@@ -15,34 +15,40 @@ class KycView(APIView):
     permission_classes = (IsAuthenticated,)
 
 
+
     def post(self, request):
         if request.method == 'POST':
             user = request.user
-            id = user.id
-            postpro = KycInfo.objects.filter(userid=id)
+            if not user:
+                return Response({'error': 'Invalid Credentials'}, status=HTTP_200_OK)
+            else:
 
-            if postpro.exists():
-                for kycstat in postpro:
+                # print(user)
+                id = user.id
+                postpro = KycInfo.objects.filter(userid=id)
+
+                if postpro.exists():
+                    for kycstat in postpro:
+                        serializer = KYCInfoSerializer(data=request.data)
+                        data = {}
+                        if kycstat.kycstatus == 1:
+                            data['result'] = 'allready entered kyc details'
+                            data['status'] = 0
+                else:
                     serializer = KYCInfoSerializer(data=request.data)
                     data = {}
-                    if kycstat.kycstatus == 1:
-                        data['result'] = 'allready entered kyc details'
+                    if serializer.is_valid():
+                        kyc = serializer.save()
+                        kyc.username = user.username
+                        kyc.userid = user.id
+                        kyc.kycstatus = 1
+                        kyc.save()
+                        data['result'] = 'success'
+                        data['status'] = 1
+                    else:
                         data['status'] = 0
-            else:
-                serializer = KYCInfoSerializer(data=request.data)
-                data = {}
-                if serializer.is_valid():
-                    kyc = serializer.save()
-                    kyc.username = user.username
-                    kyc.userid = user.id
-                    kyc.kycstatus = 1
-                    kyc.save()
-                    data['result'] = 'success'
-                    data['status'] = 1
-                else:
-                    data['status'] = 0
-                    data = serializer.errors
-        return Response(data)
+                        data = serializer.errors
+            return Response(data)
 
 
 
@@ -59,3 +65,30 @@ class ExperianceView(APIView):
         data = {}
         data['experiance'] = exp
         return Response(data)
+
+class KycStatusView(APIView):
+    permission_classes = (IsAuthenticated,)
+
+    def get(self,request):
+        user=request.user
+        kycstatus = KycInfo.objects.filter(userid=user.id)
+
+        if kycstatus.exists():
+            for var in kycstatus:
+                if  var.kycstatus == 1:
+                    return Response({ 'kyc_message': 'kyc details uploaded', 'kyc_status': 1},
+                                    status=HTTP_200_OK)
+                else:
+                    if  var.kycstatus  == 2:
+                        return Response({'kyc_message': 'kyc details pending', 'kyc_status': 2},
+                                    status=HTTP_200_OK)
+                    else:
+                        if  var.kycstatus  == 3:
+                            return Response({ 'kyc_message': 'kyc details approved', 'kyc_status': 3},
+                                        status=HTTP_200_OK)
+                        else:
+                            if  var.kycstatus  == 4:
+                                return Response({ 'kyc_message': 'kyc details rejected', 'kyc_status': 4},
+                                                status=HTTP_200_OK)
+        return Response({ 'kyc_message': 'kyc details not entered', 'kyc_status': 0},
+                        status=HTTP_200_OK)
