@@ -1,0 +1,9 @@
+{% extends "account/templates/kycverify.html" %}
+{% load i18n admin_static %}
+
+{% block result_list %}
+<div class="object-tools">
+    <a href="{% url 'myurl' %}" class="btn btn-high btn-success">Verify</a>
+</div>
+{{ block.super }}
+{% endblock %}
