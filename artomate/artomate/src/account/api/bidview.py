@@ -20,24 +20,40 @@ class BidRequest(APIView):
         if request.method == 'POST':
             user = request.user
             id = user.id
-
             data = {}
             project_code = request.data['project_code']
             project_bid = PostProject.objects.get(project_code=project_code)
-
-            # print(project_bid.id)
-            bid = Bidproject.objects.filter(project_code=project_code)
+            bid=Bidproject.objects.all()
             no_of_bid = Bidproject.objects.filter(project_code=project_code).count()
             # print(no_of_bid)
-            mylist = []
-            for var in bid:
-                mylist.append(var.user_id)
-                # print(var)
+            if bid.exists():
+                mylist = []
+                bid1 = Bidproject.objects.filter(project_code=project_code)
+                for var in bid1:
+                    mylist.append(var.user_id)
+                    # print(var)
 
-            if id in mylist:
-                data['response'] = 'You have already bid for this project'
-                return Response(data)
+                if id in mylist:
+                    data['response'] = 'You have already bid for this project'
+                    return Response(data)
 
+                else:
+                    serializer = BidProjectSerializer(data=request.data)
+                    data = {}
+                    if serializer.is_valid():
+                        bids = serializer.save()
+                        bids.project_name = project_bid.project_title
+                        # print('done')
+                        bids.project_id = project_bid.id
+                        bids.user_id = id
+                        bids.no_of_bid = no_of_bid + 1
+                        bids.save()
+                        data['result'] = 'success'
+                        data['status'] = 1
+                    else:
+                        data = serializer.errors
+                        data['status'] = 0
+                    return Response(data)
             else:
                 serializer = BidProjectSerializer(data=request.data)
                 data = {}
