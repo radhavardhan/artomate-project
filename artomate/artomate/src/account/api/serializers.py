@@ -65,17 +65,21 @@ class LoginSerializer(serializers.ModelSerializer):
 class UserProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = Userprofile
-        fields = ['id', 'name', 'email', 'phone', 'skills', 'profile', 'coverphoto', 'country']
+        fields = ['id', 'first_name', 'last_name','user_id','email', 'phone', 'designation', 'profile', 'portfolio', 'country_name','hourely_rate','description']
 
     def save(self):
         profile = Userprofile(
             phone=self.validated_data['phone'],
-            email = self.validated_data['email'],
-            skills=self.validated_data['skills'],
+            first_name=self.validated_data['first_name'],
+            last_name=self.validated_data['last_name'],
+            designation=self.validated_data['designation'],
             profile = self.validated_data['profile'],
-            coverphoto = self.validated_data['coverphoto'],
-            country = self.validated_data['country']
-            )
+            portfolio = self.validated_data['portfolio'],
+            country_name = self.validated_data['country_name'],
+            hourely_rate=self.validated_data['hourely_rate'],
+            description=self.validated_data['description'],
+
+        )
         return profile
 
 class KYCInfoSerializer(serializers.ModelSerializer):
@@ -107,7 +111,6 @@ class PostProjectSerializer(serializers.ModelSerializer):
                 project_title=self.validated_data['project_title'],
                 description=self.validated_data['description'],
                 files=self.validated_data['files'],
-
                 currency_id=self.validated_data['currencyid'],
                 budgetType_Id=self.validated_data['budgetTypeId'],
                 category_id=self.validated_data['category_id'],
@@ -174,14 +177,14 @@ class Const_SkillSerializer(serializers.ModelSerializer):
 class BidProjectSerializer(serializers.ModelSerializer):
     class Meta:
         model = Bidproject
-        fields = ('project_code', 'project_name', 'bid_amount', 'user_id', 'email','project_id','completion_time')
+        fields = ('project_code', 'project_name', 'bid_amount', 'user_id', 'email','project_id','completion_time','descreption')
 
         def save(self):
             bids = Bidproject(
                 project_code=self.validated_data['project_code'],
                 bid_amount=self.validated_data['bid_amount'],
-                email=self.validated_data['email'],
-                completion_time=self.validated_data['completion_time']
+                completion_time=self.validated_data['completion_time'],
+                descreption=self.validates_data['descreption']
             )
             return bids
 
@@ -210,8 +213,9 @@ class MyTokenObtainSerializer(TokenObtainPairSerializer):
         password = attrs['password']
         user = authenticate(username=username, password=password)
 
+
         if not user:
-            custom={"Error":"Invalid Credentials","status":"0"}
+            custom={"error":"Invalid Credentials","status":"0"}
             return custom
 
         data = super(TokenObtainPairSerializer, self).validate(attrs)

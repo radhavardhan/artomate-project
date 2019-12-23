@@ -1,4 +1,6 @@
+from django.core.serializers.json import DjangoJSONEncoder
 from django.db.models import Q
+from django.http import JsonResponse
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.status import (
     HTTP_400_BAD_REQUEST,
@@ -9,32 +11,53 @@ import random
 import string
 from random import choice
 from string import ascii_lowercase, digits, hexdigits
+
+import json
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from account.models import PostProject, Skills, Bidproject, Const_skills
+from account.models import PostProject, Skills, Bidproject, Const_skills,Experiance,country,Currency
 from account.api.serializers import PostProjectSerializer
 
 
 class AllProjects(APIView):
 
     def get(self, request):
-        queryset = PostProject.objects.values('id', 'project_title', 'description', 'min', 'max', 'project_deadline',
-                                              'username')
-
+        queryset = PostProject.objects.values('id', 'project_title', 'description', 'min', 'max',
+                                               'username')
+        data={}
         mylist = []
-        queryset_list = list(queryset)
+        for i in queryset:
+            project_skill = Skills.objects.filter(project_id=i['id']).values('skill_name')
+            bid = Bidproject.objects.filter(project_id=i['id']).values('no_of_bid').count()
+            bids=bid
+            data= {"projects":i, "skills": project_skill, "bids": bids}
+            mylist.append(data)
 
-        for i in queryset_list:
-            id = i['id']
-            # print(id)
-            project_skill = Skills.objects.filter(project_id=id).values('skill_name')
-            bid = Bidproject.objects.filter(project_id=id).count()
-            mylist.append(i)
-            mylist.append(project_skill)
-            mylist.append(bid)
-
-        print(mylist)
         return Response(mylist)
+
+
+
+class SingleJob(AllProjects):
+
+    def get(self, request ,projectid):
+        singlejob=PostProject.objects.filter(id=projectid)
+        data={}
+        for var in singlejob:
+            data['project_name']=var.project_title
+            data['projetc_route']=var.route
+            data['descreption'] = var.description
+            data['username'] = var.username
+            data['min'] = var.min
+            data['max']=var.max
+            data['project_deadline'] = var.project_deadline
+            exp = Experiance.objects.filter(id=var.experience_required).values('Exp_name')
+            data['experienced_required'] = exp
+            countryname=country.objects.filter(id=var.country_id).values('country_name')
+            data['country']=countryname
+            courrencytype = Currency.objects.filter(id=var.currency_id).values('currency_type')
+            data['currency']=courrencytype
+        return Response(data)
+
 
 
 class Projects(APIView):
@@ -124,21 +147,15 @@ class Projects(APIView):
 
 class ProjectOnSkill(APIView):
     def get(self, request, skill_code):
-        data = {}
+
         skill = skill_code
         mylist = []
         value = Const_skills.objects.filter(skill_code=skill).values('id')
         for i in value:
             value1 = Skills.objects.filter(skill_id=i['id']).values('project_id')
-            print(value1)
             for j in value1:
                 results = PostProject.objects.filter(id=j['project_id']).values('project_title', 'route')
-                print('==================================')
                 mylist.append(results)
-                print(mylist)
-                print('-----------------------------------')
-                # print(results)
-            # data['response'] = results
 
         return Response(mylist)
 

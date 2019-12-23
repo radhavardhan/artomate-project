@@ -34,7 +34,7 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 
 from account.api import serializers
 from account.models import KycInfo, Account, Categories, PostProject, Userprofile, SubCategory, Skills, Budgets, \
-    Bidproject, No_of_bids_for_project, Const_skills, Json_data, Phone_OTP
+    Bidproject, No_of_bids_for_project, Const_skills, Json_data, Phone_OTP,User_Skills,country
 
 from rest_framework.views import APIView
 from django.core.mail import send_mail
@@ -167,8 +167,7 @@ class DashboardView(APIView):
             for var in kyc_status:
                 data['kyc_status'] = var.kycstatus
         else:
-            data['kyc_message'] = 'kyc details not entered'
-            data['kyc_status'] = 0
+                data['kyc_status'] = 0
         return JsonResponse(data)
 
 
@@ -177,13 +176,24 @@ class UserProfile(APIView):
 
     def post(self, request):
         user = request.user
+        print(user.id)
+        skills=request.data['skills']
 
+        skill_name = skills.split(',')
+        countryname = country.objects.filter(id=request.data['country_name']).values('country_name')
+        # print(skill_name)
         serializer = UserProfileSerializer(data=request.data)
         data = {}
         if serializer.is_valid():
             profile = serializer.save()
             profile.name = user.username
-            profile.userid = user.id
+            profile.user_id = user.id
+            profile.email=user.email
+            for i in skill_name:
+                skill_post = User_Skills.objects.create(user_id= user.id, skill_name=i)
+
+                skill_post.save()
+            profile.country_name=countryname
             profile.save()
             data['result'] = 'success'
             data['status'] = 1
@@ -193,14 +203,19 @@ class UserProfile(APIView):
         return Response(data)
 
 
+
 class ProfileVeiw(APIView):
     permission_classes = (IsAuthenticated,)
 
     def get(self, request):
         user = request.user
         user_id = user.id
-        profile = Userprofile.objects.filter(userid=user_id).values()
-        return JsonResponse({"profile": list(profile)})
+        profile = Userprofile.objects.filter(user_id=user_id).values('first_name',)
+
+        data={}
+        data['user_profile']=profile
+
+        return Response(data)
 
 
 @api_view(["GET"])
@@ -234,16 +249,12 @@ class UsernameValidation(APIView):
                 return Response('Success', status=HTTP_200_OK)
 
 
-class UsernameValidate(APIView):
-    def get(self, request):
-        name = request.data['username']
-        # print(name)
-        usernameval = Account.objects.filter(username=name)
-        if usernameval.exists():
-            return Response('Username already taken', status=HTTP_404_NOT_FOUND)
-        else:
-            return Response('Success', status=HTTP_200_OK)
-
+class FreelancerView(APIView):
+    def get(self, request,userid):
+        user = Account.objects.filter(id=userid).values('email','username','date_joined')
+        data={}
+        data['Freelancer']=user
+        return Response(data)
 
 class TestJson(APIView):
     def post(self, request):

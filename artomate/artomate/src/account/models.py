@@ -84,7 +84,7 @@ class KycInfo(models.Model):
     userid = models.IntegerField(default=None, null=True)
     fullname = models.CharField(max_length=100)
     dob = models.DateField()
-    mobile = models.CharField(max_length=17)
+    mobile = models.BigIntegerField()
     idprooffront = models.ImageField(upload_to='')
     idproofback = models.ImageField(upload_to='')
     kycstatus = models.IntegerField(null=True)
@@ -111,6 +111,10 @@ class Skills(models.Model):
     skill_id = models.IntegerField(blank=True)
     skill_name = models.CharField(max_length=30,blank=True)
     project_id =models.IntegerField()
+
+class User_Skills(models.Model):
+    user_id = models.IntegerField(blank=True)
+    skill_name = models.CharField(max_length=30, blank=True)
 
 class Currency(models.Model):
     currency_type = models.CharField(max_length=30)
@@ -142,8 +146,6 @@ class PostProject(models.Model):
     files = models.FileField(upload_to='pictures/files/',null=True)
     userid = models.IntegerField(default=None, null=True)
     username = models.CharField(max_length=50,default=None, null=True)
-
-
     budgetType_Id = models.IntegerField(default=None)
     currency_id = models.IntegerField(default=None)
     min = models.IntegerField(null=True)
@@ -155,14 +157,17 @@ class PostProject(models.Model):
 
 
 class Userprofile(models.Model):
-    name = models.CharField(max_length=30,null=True)
-    user_id = models.IntegerField(default=None, null=True)
-    email = models.EmailField()
-    phone = models.BigIntegerField()
-    skills = models.TextField()
+    first_name = models.CharField(max_length=30)
+    last_name = models.CharField(max_length=30)
+    user_id = models.IntegerField(default=None)
+    email = models.EmailField(default=None)
+    phone = models.BigIntegerField(default=None)
+    designation=models.TextField()
     profile = models.ImageField(upload_to='')
-    cover_photo = models.ImageField(upload_to='')
-    country_id = models.CharField(max_length=30)
+    portfolio = models.FileField(upload_to='')
+    country_name = models.CharField(max_length=30)
+    hourely_rate=models.IntegerField()
+    description=models.TextField()
 
 
 class Dashboard(models.Model):
@@ -182,9 +187,10 @@ class Bidproject(models.Model):
     project_name = models.CharField(max_length=300,default=None,null=True)
     bid_amount = models.IntegerField()
     user_id=models.IntegerField(default=None,null=True)
-    email = models.EmailField(verbose_name="email", max_length=60)
+    email = models.EmailField(verbose_name="email", max_length=60,null=True)
     no_of_bid = models.IntegerField(default=None,null =True)
     completion_time=models.TextField(max_length=300, default=None)
+    descreption=models.TextField()
 
 class No_of_bids_for_project(models.Model):
     project_code = models.CharField(max_length=30, default=None, null=True)

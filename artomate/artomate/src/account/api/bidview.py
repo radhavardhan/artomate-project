@@ -20,6 +20,8 @@ class BidRequest(APIView):
         if request.method == 'POST':
             user = request.user
             id = user.id
+            email = user.email
+            # print(email)
             data = {}
             project_code = request.data['project_code']
             project_bid = PostProject.objects.get(project_code=project_code)
@@ -43,7 +45,7 @@ class BidRequest(APIView):
                     if serializer.is_valid():
                         bids = serializer.save()
                         bids.project_name = project_bid.project_title
-                        # print('done')
+                        bids.email=email
                         bids.project_id = project_bid.id
                         bids.user_id = id
                         bids.no_of_bid = no_of_bid + 1
@@ -60,7 +62,7 @@ class BidRequest(APIView):
                 if serializer.is_valid():
                     bids = serializer.save()
                     bids.project_name = project_bid.project_title
-                    # print('done')
+                    bids.email = email
                     bids.project_id = project_bid.id
                     bids.user_id = id
                     bids.no_of_bid = no_of_bid + 1
@@ -79,16 +81,17 @@ class No_Of_Bid(APIView):
     def get(self, request):
         user = request.user
         id = user.id
-        data = {}
+
         mylist = []
         projects_posted = PostProject.objects.filter(userid=id).values('project_title', 'route', 'id')
         # print(projects_posted)
         for var in projects_posted:
-            numberofbids = Bidproject.objects.filter(project_id=var['id']).count()
-            print(numberofbids)
-            bidu_ser_id = Bidproject.objects.filter(project_id=var['id']).values('id', 'user_id')
-            mylist.append(var['route'])
-            mylist.append(numberofbids)
+
+            data={"project":var['route'],"no_of_bid":Bidproject.objects.filter(project_id=var['id']).count()}
+            mylist.append(data)
+
+
+
         return Response(mylist)
 
 
@@ -139,7 +142,7 @@ class Select_Bid(APIView):
                     selectedbid.project_route = projectroute.route
                     selectedbid.hirer_email_id = request.user.email
                     selectedbid.save()
-                    data['result'] = "sucess"
+                    data['result'] = "success"
                     data['status'] = 1
                 else:
                     data['error'] = serializer.errors
