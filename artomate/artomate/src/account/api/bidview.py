@@ -8,7 +8,7 @@ from rest_framework.status import (
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from account.models import PostProject, Bidproject, Account,Hirer_bid_select
+from account.models import PostProject, Bidproject, Account,Hirer_bid_select,KycInfo
 from account.api.serializers import BidProjectSerializer,HirerSelectBidSerializer
 import json
 
@@ -27,52 +27,72 @@ class BidRequest(APIView):
             project_bid = PostProject.objects.get(project_code=project_code)
             bid=Bidproject.objects.all()
             no_of_bid = Bidproject.objects.filter(project_code=project_code).count()
-            # print(no_of_bid)
-            if bid.exists():
-                mylist = []
-                bid1 = Bidproject.objects.filter(project_code=project_code)
-                for var in bid1:
-                    mylist.append(var.user_id)
-                    # print(var)
+            user_kyc = KycInfo.objects.filter(userid=user.id)
+            if user_kyc.exists():
+                for kyc in user_kyc:
+                    if kyc.kycstatus == 1:
+                        data['error']="You have uploaded kyc details wait for approve"
+                        return Response(data)
+                    elif kyc.kycstatus == 2:
+                        data['error']="Your kyc is pending"
+                        return Response(data)
+                    elif kyc.kycstatus == 3:
+                        if bid.exists():
+                            mylist = []
+                            bid1 = Bidproject.objects.filter(project_code=project_code)
+                            for var in bid1:
+                                mylist.append(var.user_id)
+                                # print(var)
 
-                if id in mylist:
-                    data['response'] = 'You have already bid for this project'
-                    return Response(data)
+                            if id in mylist:
+                                data['response'] = 'You have already bid for this project'
+                                return Response(data)
 
-                else:
-                    serializer = BidProjectSerializer(data=request.data)
-                    data = {}
-                    if serializer.is_valid():
-                        bids = serializer.save()
-                        bids.project_name = project_bid.project_title
-                        bids.email=email
-                        bids.project_id = project_bid.id
-                        bids.user_id = id
-                        bids.no_of_bid = no_of_bid + 1
-                        bids.save()
-                        data['result'] = 'success'
-                        data['status'] = 1
+                            else:
+                                serializer = BidProjectSerializer(data=request.data)
+                                data = {}
+                                if serializer.is_valid():
+                                    bids = serializer.save()
+                                    bids.project_name = project_bid.project_title
+                                    bids.email = email
+                                    bids.project_id = project_bid.id
+                                    bids.user_id = id
+                                    bids.no_of_bid = no_of_bid + 1
+                                    bids.save()
+                                    data['result'] = 'success'
+                                    data['status'] = 1
+                                else:
+                                    data = serializer.errors
+                                    data['status'] = 0
+                                return Response(data)
+                        else:
+                            serializer = BidProjectSerializer(data=request.data)
+                            data = {}
+                            if serializer.is_valid():
+                                bids = serializer.save()
+                                bids.project_name = project_bid.project_title
+                                bids.email = email
+                                bids.project_id = project_bid.id
+                                bids.user_id = id
+                                bids.no_of_bid = no_of_bid + 1
+                                bids.save()
+                                data['result'] = 'success'
+                                data['status'] = 1
+
+                            else:
+                                data = serializer.errors
+                                data['status'] = 0
+                            return Response(data)
+
                     else:
-                        data = serializer.errors
-                        data['status'] = 0
-                    return Response(data)
+                        if kyc.kycstatus == 4:
+                            data['error']="Your kyc have been rejected"
+                            return Response(data)
             else:
-                serializer = BidProjectSerializer(data=request.data)
-                data = {}
-                if serializer.is_valid():
-                    bids = serializer.save()
-                    bids.project_name = project_bid.project_title
-                    bids.email = email
-                    bids.project_id = project_bid.id
-                    bids.user_id = id
-                    bids.no_of_bid = no_of_bid + 1
-                    bids.save()
-                    data['result'] = 'success'
-                    data['status'] = 1
-                else:
-                    data = serializer.errors
-                    data['status'] = 0
+                data['error']="kyc details not entered"
                 return Response(data)
+
+
 
 
 class No_Of_Bid(APIView):

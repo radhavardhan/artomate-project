@@ -65,7 +65,7 @@ class LoginSerializer(serializers.ModelSerializer):
 class UserProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = Userprofile
-        fields = ['id', 'first_name', 'last_name','user_id','email', 'phone', 'designation', 'profile', 'portfolio', 'country_name','hourely_rate','description']
+        fields = ['id', 'first_name', 'last_name','user_id','email', 'phone', 'designation', 'profile', 'portfolio',  'hourely_rate','description','country_id']
 
     def save(self):
         profile = Userprofile(
@@ -75,7 +75,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
             designation=self.validated_data['designation'],
             profile = self.validated_data['profile'],
             portfolio = self.validated_data['portfolio'],
-            country_name = self.validated_data['country_name'],
+            country_id=self.validated_data['country_id'],
             hourely_rate=self.validated_data['hourely_rate'],
             description=self.validated_data['description'],
 

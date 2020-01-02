@@ -176,12 +176,7 @@ class UserProfile(APIView):
 
     def post(self, request):
         user = request.user
-        print(user.id)
-        skills=request.data['skills']
 
-        skill_name = skills.split(',')
-        countryname = country.objects.filter(id=request.data['country_name']).values('country_name')
-        # print(skill_name)
         serializer = UserProfileSerializer(data=request.data)
         data = {}
         if serializer.is_valid():
@@ -189,11 +184,6 @@ class UserProfile(APIView):
             profile.name = user.username
             profile.user_id = user.id
             profile.email=user.email
-            for i in skill_name:
-                skill_post = User_Skills.objects.create(user_id= user.id, skill_name=i)
-
-                skill_post.save()
-            profile.country_name=countryname
             profile.save()
             data['result'] = 'success'
             data['status'] = 1
@@ -210,12 +200,51 @@ class ProfileVeiw(APIView):
     def get(self, request):
         user = request.user
         user_id = user.id
-        profile = Userprofile.objects.filter(user_id=user_id).values('first_name',)
+        data = {}
+        profile = Userprofile.objects.filter(user_id=user_id).values()
+        for var in profile:
+            countryname = country.objects.filter(id=var['country_id']).values('country_name')
+            data={
+                "first_name":var['first_name'],
+                  "last_name":var['last_name'],
+                  "email":var['email'],
+                    "hourely_rate":var['hourely_rate'],
+                "phone":var['phone'],
 
-        data={}
-        data['user_profile']=profile
+                  "countryname":countryname,
+                  }
 
         return Response(data)
+
+class UpdateProfile(APIView):
+    permission_classes = (IsAuthenticated,)
+
+    def post(self,request):
+        if request.method=='POST':
+            user=request.user
+            profile = Userprofile.objects.filter(user_id=user.id).values()
+            for var in profile:
+                print(var)
+        return Response("done")
+
+
+class updateuserprofile(APIView):
+    permission_classes = (IsAuthenticated,)
+    def post(self,request):
+        user = request.user
+        # user_id = user.id
+        userprofile = Userprofile.objects.get(user_id=user.id)
+        userprofile.first_name = request.data['first_name']
+        userprofile.last_name = request.data['last_name']
+        userprofile.email = request.data['email']
+        userprofile.hourely_rate = request.data['hourely_rate']
+        userprofile.portfolio = request.data['portfolio']
+        userprofile.designation = request.data['designation']
+        userprofile.description = request.data['description']
+        userprofile.save()
+        return Response("success")
+
+
 
 
 @api_view(["GET"])

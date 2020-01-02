@@ -23,7 +23,7 @@ class AllProjects(APIView):
 
     def get(self, request):
         queryset = PostProject.objects.values('id', 'project_title', 'description', 'min', 'max',
-                                               'username')
+                                               'username','created_at')
         data={}
         mylist = []
         for i in queryset:
@@ -32,17 +32,17 @@ class AllProjects(APIView):
             bids=bid
             data= {"projects":i, "skills": project_skill, "bids": bids}
             mylist.append(data)
-
         return Response(mylist)
 
 
 
 class SingleJob(AllProjects):
 
-    def get(self, request ,projectid):
-        singlejob=PostProject.objects.filter(id=projectid)
+    def get(self, request ,projectroute):
+        singlejob=PostProject.objects.filter(route=projectroute)
         data={}
         for var in singlejob:
+            skills = Skills.objects.filter(project_id=var.id).values('skill_name','skill_id')
             data['project_name']=var.project_title
             data['projetc_route']=var.route
             data['descreption'] = var.description
@@ -56,6 +56,7 @@ class SingleJob(AllProjects):
             data['country']=countryname
             courrencytype = Currency.objects.filter(id=var.currency_id).values('currency_type')
             data['currency']=courrencytype
+            data['skills']=skills
         return Response(data)
 
 
@@ -69,6 +70,10 @@ class Projects(APIView):
             size = 3
             code = 'PR' + ''.join(random.choice(string.digits + string.ascii_letters[26:]) for _ in range(size))
             string1 = request.data['project_title']
+            # cat=request.data['category_id']
+            # for k in cat:
+            #     print(k['id'])
+            # print(cat)
             user = request.user
             project = string1.replace(" ", "-")
             string2 = '-' + ''.join(choice(digits) for i in range(8))
@@ -77,21 +82,22 @@ class Projects(APIView):
             serializer = PostProjectSerializer(data=request.data)
             if postproject1.exists():
                 for var in postproject1:
-                    # print("executing this 1")
+
                     if var.project_title == string1:
                         # print("executing this 2")
                         project_title12 = project_title1
                         if serializer.is_valid():
                             pro = serializer.save()
                             pro.userid = user.id
+                            cat = request.data['category_id']
+                            cat1=json.dumps(cat)
+                            pro.category_id = cat1
                             pro.project_code = code
                             pro.username = user.username
                             pro.route = project_title12
                             pro.save()
                             project_id = pro.id
-
                             skillname = request.data['skills']
-
                             for i in skillname:
                                 post = Skills.objects.create(skill_id=i['id'], project_id=project_id,
                                                              skill_name=i['name'])
@@ -107,6 +113,11 @@ class Projects(APIView):
                 if serializer.is_valid():
                     pro = serializer.save()
                     pro.userid = user.id
+                    cat = request.data['category_id']
+                    cat1 = json.dumps(cat)
+
+                    pro.category_id = cat1
+
                     pro.project_code = code
                     pro.username = user.username
                     pro.route = project_title2
@@ -123,11 +134,16 @@ class Projects(APIView):
                 return Response(data)
 
             else:
-                # print("executing this 4")
+
                 project_title2 = project
                 if serializer.is_valid():
                     pro = serializer.save()
                     pro.userid = user.id
+                    cat = request.data['category_id']
+                    cat1 = json.dumps(cat)
+
+                    pro.category_id = cat1
+
                     pro.project_code = code
                     pro.username = user.username
                     pro.route = project_title2

@@ -137,13 +137,13 @@ class Budgets(models.Model):
     update_at = models.DateTimeField(verbose_name='updates_at', auto_now=True)
 
 class PostProject(models.Model):
-    category_id = models.CharField(max_length=60,blank=True)
+    category_id = models.CharField(max_length=30,blank=True)
     subcategory_id = models.CharField(max_length=60,blank=True)
     project_title = models.CharField(max_length=50)
     route = models.CharField(max_length=100,blank =True)
     project_code = models.CharField(max_length = 30, default =None , null=True,unique=True)
     description = models.CharField(max_length=50)
-    files = models.FileField(upload_to='pictures/files/',null=True)
+    files = models.FileField(upload_to='',null=True)
     userid = models.IntegerField(default=None, null=True)
     username = models.CharField(max_length=50,default=None, null=True)
     budgetType_Id = models.IntegerField(default=None)
@@ -154,6 +154,8 @@ class PostProject(models.Model):
     project_deadline = models.DateField()
     experience_required =models.CharField(max_length= 100)
     country_id = models.CharField(max_length= 100)
+    created_at = models.DateTimeField(verbose_name='created_at', auto_now_add=True)
+    update_at = models.DateTimeField(verbose_name='updates_at', auto_now=True)
 
 
 class Userprofile(models.Model):
@@ -165,7 +167,7 @@ class Userprofile(models.Model):
     designation=models.TextField()
     profile = models.ImageField(upload_to='')
     portfolio = models.FileField(upload_to='')
-    country_name = models.CharField(max_length=30)
+    country_id=models.IntegerField()
     hourely_rate=models.IntegerField()
     description=models.TextField()
 
