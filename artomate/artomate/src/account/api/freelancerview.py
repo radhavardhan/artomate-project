@@ -276,95 +276,113 @@ class FreelancerOnLanguage(APIView):
 
 class SearchFilter(APIView):
     def post(self,request):
-
+        data1 = {}
+        mylist = []
         skill =request.data['skill']
         id=request.data['search_id']
         search_id=int(id)
-        if search_id == 1:
-            value = Const_skills.objects.filter(skill_name=skill).values('id')
-            if value.exists():
-                data1={}
-                mylist = []
-                for i in value:
-                    value1 = Skills.objects.filter(skill_id=i['id']).values('project_id')
+        value = Const_skills.objects.filter(skill_name=skill).values('id')
+        if value.exists():
+            if search_id == 1:
 
-                    if value1.exists():
+                if value.exists():
 
-                        for j in value1:
-                            results = PostProject.objects.filter(id=j['project_id']).values('id', 'project_title',
-                                                                                            'description', 'min', 'max',
-                                                                                            'username', 'created_at',
-                                                                                            'route')
-                            for k in results:
-                                project_skill = Skills.objects.filter(project_id=k['id']).values('skill_name')
-                                bid = Bidproject.objects.filter(project_id=k['id']).values('no_of_bid').count()
-                                bids = bid
-                                data = {"projects": k, "skills": project_skill, "bids": bids}
-                                mylist.append(data)
+                    for i in value:
+                        value1 = Skills.objects.filter(skill_id=i['id']).values('project_id')
 
-                        data1['data'] = mylist
-                        data1['totalcount'] = len(mylist)
+                        if value1.exists():
 
-                        return Response(data1)
-                    else:
-                        data = {}
-                        data['message'] = "Not Found"
-                        data['status'] = 102
-                        return Response(data)
-            else:
-                data = {}
-                data['message'] = "Not Found"
-                data['status'] = 102
-                return Response(data)
-
-
-        elif search_id == 2:
-            value = Const_skills.objects.filter(skill_code=skill).values('id')
-            if value.exists():
-
-                for i in value:
-                    value1 = User_Skills.objects.filter(skill_id=i['id']).values('user_id')
-                    if value1.exists():
-
-                        for j in value1:
-                            results = Userprofile.objects.filter(user_id=j['user_id']).values('user_name',
-                                                                                              'designation',
-                                                                                              'hourely_rate',
-                                                                                              'description',
-                                                                                              'profile', 'user_id',
-                                                                                              'country_id')
-
-                            userfullname = KycInfo.objects.filter(userid=j['user_id']).values('fullname')
-
-                            for k in userfullname:
-
-                                for i in results:
-                                    data = {
-                                        "fullname": k['fullname'],
-                                        "freelancer": i,
-                                        "location": country.objects.filter(id=i['country_id']).values('country_name'),
-                                        "ratings": 4,
-                                        "jobscompleted": 2
-                                    }
-
+                            for j in value1:
+                                results = PostProject.objects.filter(id=j['project_id']).values('id', 'project_title',
+                                                                                                'description', 'min', 'max',
+                                                                                                'username', 'created_at',
+                                                                                                'route')
+                                for k in results:
+                                    project_skill = Skills.objects.filter(project_id=k['id']).values('skill_name')
+                                    bid = Bidproject.objects.filter(project_id=k['id']).values('no_of_bid').count()
+                                    bids = bid
+                                    data = {"projects": k, "skills": project_skill, "bids": bids}
                                     mylist.append(data)
-                        data1['data'] = mylist
-                        data1['total'] = len(mylist)
 
-                        return Response(data1)
+                            data1['data'] = mylist
+                            data1['totalcount'] = len(mylist)
+
+                            return Response(data1)
+                        else:
+                            data = {}
+                            data['message'] = "Not Found"
+                            data['status'] = 102
+                            return Response(data)
+                else:
+                    data = {}
+                    data['message'] = "Not Found"
+                    data['status'] = 102
+                    return Response(data)
+            else:
+
+                if search_id == 2:
+
+                    mylist = []
+                    data = {}
+                    data1 = {}
+
+                    if value.exists():
+
+                        for i in value:
+                            value1 = User_Skills.objects.filter(skill_id=i['id']).values('user_id')
+                            if value1.exists():
+
+                                for j in value1:
+                                    results = Userprofile.objects.filter(user_id=j['user_id']).values('user_name',
+                                                                                                      'designation',
+                                                                                                      'hourely_rate',
+                                                                                                      'description',
+                                                                                                      'profile', 'user_id',
+                                                                                                      'country_id')
+
+                                    userfullname = KycInfo.objects.filter(userid=j['user_id']).values('fullname')
+
+                                    for k in userfullname:
+
+                                        for i in results:
+                                            data = {
+                                                "fullname": k['fullname'],
+                                                "freelancer": i,
+                                                "location": country.objects.filter(id=i['country_id']).values(
+                                                    'country_name'),
+                                                "ratings": 4,
+                                                "jobscompleted": 2
+                                            }
+
+                                            mylist.append(data)
+                                data1['data'] = mylist
+                                data1['total'] = len(mylist)
+
+                                return Response(data1)
+                            else:
+                                data = {}
+                                data['message'] = "Not Found"
+                                data['status'] = 102
+                                return Response(data)
+
                     else:
                         data = {}
                         data['message'] = "Not Found"
                         data['status'] = 102
                         return Response(data)
+                else:
+                    data = {}
+                    data['message'] = "Not Found"
+                    data['status'] = 102
+                    return Response(data)
 
-            else:
-                data = {}
-                data['message'] = "Not Found"
-                data['status'] = 102
-                return Response(data)
-
-            return Response("freelancer")
         else:
-            return Response("acts")
+            data = {}
+            data['message'] = "Not Found"
+            data['status'] = 102
+            return Response(data)
+
+
+
+
 
