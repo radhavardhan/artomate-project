@@ -8,9 +8,9 @@ from rest_framework.status import (
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from account.models import PostProject, Bidproject, Account,Hirer_bid_select,KycInfo
+from account.models import PostProject, Bidproject, Account,Hirer_bid_select,KycInfo,Userprofile
 from account.api.serializers import BidProjectSerializer,HirerSelectBidSerializer
-import json
+
 
 
 class BidRequest(APIView):
@@ -31,10 +31,12 @@ class BidRequest(APIView):
             if user_kyc.exists():
                 for kyc in user_kyc:
                     if kyc.kycstatus == 1:
-                        data['error']="You have uploaded kyc details wait for approve"
+                        data['message']="You have uploaded kyc details wait for approve"
+                        data['status'] = 101
                         return Response(data)
                     elif kyc.kycstatus == 2:
-                        data['error']="Your kyc is pending"
+                        data['message']="Your kyc is pending"
+                        data['status'] = 101
                         return Response(data)
                     elif kyc.kycstatus == 3:
                         if bid.exists():
@@ -46,6 +48,7 @@ class BidRequest(APIView):
 
                             if id in mylist:
                                 data['response'] = 'You have already bid for this project'
+                                data['status'] = 0
                                 return Response(data)
 
                             else:
@@ -53,14 +56,19 @@ class BidRequest(APIView):
                                 data = {}
                                 if serializer.is_valid():
                                     bids = serializer.save()
-                                    bids.project_name = project_bid.project_title
+                                    bids.project_name = project_bid.route
                                     bids.email = email
                                     bids.project_id = project_bid.id
                                     bids.user_id = id
                                     bids.no_of_bid = no_of_bid + 1
+                                    user_bid = Account.objects.filter(id=id).values('bid')
+                                    for e in user_bid:
+                                        j = e['bid'] - 1
+                                        user_bid.update(bid=j)
                                     bids.save()
+
                                     data['result'] = 'success'
-                                    data['status'] = 1
+                                    data['status'] = 101
                                 else:
                                     data = serializer.errors
                                     data['status'] = 0
@@ -70,14 +78,18 @@ class BidRequest(APIView):
                             data = {}
                             if serializer.is_valid():
                                 bids = serializer.save()
-                                bids.project_name = project_bid.project_title
+                                bids.project_name = project_bid.route
                                 bids.email = email
                                 bids.project_id = project_bid.id
                                 bids.user_id = id
                                 bids.no_of_bid = no_of_bid + 1
+                                user_bid = Account.objects.filter(id=id).values('bid')
+                                for e in user_bid:
+                                    j = e['bid'] - 1
+                                    user_bid.update(bid=j)
                                 bids.save()
                                 data['result'] = 'success'
-                                data['status'] = 1
+                                data['status'] = 101
 
                             else:
                                 data = serializer.errors
@@ -86,10 +98,12 @@ class BidRequest(APIView):
 
                     else:
                         if kyc.kycstatus == 4:
-                            data['error']="Your kyc have been rejected"
+                            data['message']="Your kyc have been rejected"
+                            data['status'] = 0
                             return Response(data)
             else:
-                data['error']="kyc details not entered"
+                data['message']="kyc details not entered"
+                data['status']=0
                 return Response(data)
 
 
@@ -120,23 +134,17 @@ class Bid_Details_Project(APIView):
 
 
 
-    def get(self, request, projectcode):
+    def get(self, request, projectroute):
+        print(projectroute)
+        projects_posted = PostProject.objects.filter(route=projectroute).values('id', 'route', 'project_deadline','min','max')
 
-        print(projectcode)
-        if not permission_classes:
-            return Response({'error': 'Invalid Credentials'}, status=HTTP_200_OK)
-        else:
-
-            projects_posted = PostProject.objects.filter(project_code=projectcode).values('id', 'route', 'project_deadline','min','max')
-            biddeatils =Bidproject.objects.filter(project_code=projectcode).values('bid_amount','user_id','completion_time','email')
-            norofbid=Bidproject.objects.filter(project_code=projectcode).count()
-            for var in biddeatils:
-
-                data={}
-                data['project']=projects_posted
-                data['no_of_bid']=norofbid
-                data['bid details']=biddeatils
-                # data['user details']=Account.objects.filter(id=var['user_id']).values('username')
+        for i in projects_posted:
+            biddeatils =Bidproject.objects.filter(project_id=i['id']).values('bid_amount','user_id','completion_time','email')
+            norofbid=Bidproject.objects.filter(project_id=i['id']).count()
+            data={}
+            data['project']=projects_posted
+            data['no_of_bid']=norofbid
+            data['bid details']=biddeatils
             return Response(data)
 
 
@@ -146,27 +154,40 @@ class Select_Bid(APIView):
 
     def post(self,request):
         if request.method=='POST':
-            projectid=request.data['project_id']
-            projectcheck = Hirer_bid_select.objects.filter(project_id=projectid)
-            data={}
-            if projectcheck.exists():
-                data['result'] = 'Allready freelancer selected for project'
-                data['status'] = 0
-            else:
-                projectroute = PostProject.objects.get(id=projectid)
-                print(projectroute)
-                serializer=HirerSelectBidSerializer(data=request.data)
-                if serializer.is_valid():
-                    print(123)
-                    selectedbid=serializer.save()
-                    selectedbid.project_route = projectroute.route
-                    selectedbid.hirer_email_id = request.user.email
-                    selectedbid.save()
-                    data['result'] = "success"
-                    data['status'] = 1
+            data = {}
+            if 'project_id' in request.data:
+                projectid=request.data['project_id']
+                if not projectid:
+                    data['message'] = "enter an project_id"
+                    data['status'] = 102
+                    return Response(data)
                 else:
-                    data['error'] = serializer.errors
-                    data['status'] = 0
+                    projectcheck = Hirer_bid_select.objects.filter(project_id=projectid)
+                    if projectcheck.exists():
+                        data['message'] = 'Allready freelancer selected for project'
+                        data['status'] = 102
+                    else:
+                        # freelancer_email = request.data['freelancer_email_id']
+                        # biddetails=Bidproject.objects.filter(email=freelancer_email)
+                        # if biddetails.exists():
+                        projectroute = PostProject.objects.get(id=projectid)
+                        print(projectroute)
+                        serializer=HirerSelectBidSerializer(data=request.data)
+                        if serializer.is_valid():
+                            print(123)
+                            selectedbid=serializer.save()
+                            selectedbid.project_route = projectroute.route
+                            selectedbid.hirer_email_id = request.user.email
+                            selectedbid.save()
+                            data['message'] = "success"
+                            data['status'] = 100
+                        else:
+                            data['error'] = serializer.errors
+                            data['status'] = 0
+                    return Response(data)
+            else:
+                data['message'] = "project_id required"
+                data['status'] = 102
+                return Response(data)
 
-            return Response(data)
 

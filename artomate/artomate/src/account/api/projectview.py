@@ -1,38 +1,66 @@
-from django.core.serializers.json import DjangoJSONEncoder
 from django.db.models import Q
-from django.http import JsonResponse
+from rest_framework.pagination import LimitOffsetPagination, PageNumberPagination
 from rest_framework.permissions import AllowAny, IsAuthenticated
-from rest_framework.status import (
-    HTTP_400_BAD_REQUEST,
-    HTTP_404_NOT_FOUND,
-    HTTP_200_OK
-)
 import random
 import string
 from random import choice
 from string import ascii_lowercase, digits, hexdigits
-
 import json
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from account.models import PostProject, Skills, Bidproject, Const_skills,Experiance,country,Currency
+from rest_framework.pagination import (
+    PageNumberPagination,LimitOffsetPagination)
+
+from account.api.pagination import PostLimitOffsetPagination,PostPageNumberPagination
+from account.models import PostProject, Skills, Bidproject, Const_skills, Experiance, country, Currency, KycInfo
 from account.api.serializers import PostProjectSerializer
+from django.http import HttpResponse, JsonResponse, Http404
+
+class ProjectViewPagination(PageNumberPagination):
+    page_size = 2
+
+class Proj(APIView):
+    pagination_class = ProjectViewPagination
+
+    def get(self,request):
+        queryset = PostProject.objects.values('id', 'project_title', 'description', 'min', 'max',
+                                              'username', 'created_at').order_by('created_at').reverse()
+        data = {}
+        data['proj']=queryset
+        data['message'] = "success"
+        data['status'] = 102
+        return Response(data)
+
 
 
 class AllProjects(APIView):
+    pagination_class = PageNumberPagination
 
     def get(self, request):
         queryset = PostProject.objects.values('id', 'project_title', 'description', 'min', 'max',
-                                               'username','created_at')
-        data={}
-        mylist = []
-        for i in queryset:
-            project_skill = Skills.objects.filter(project_id=i['id']).values('skill_name')
-            bid = Bidproject.objects.filter(project_id=i['id']).values('no_of_bid').count()
-            bids=bid
-            data= {"projects":i, "skills": project_skill, "bids": bids}
-            mylist.append(data)
-        return Response(mylist)
+                                               'username','created_at','route').order_by('created_at').reverse()
+        data = {}
+        data1={}
+        if queryset.exists():
+
+            mylist = []
+            for i in queryset:
+                project_skill = Skills.objects.filter(project_id=i['id']).values('skill_name')
+                bid = Bidproject.objects.filter(project_id=i['id']).values('no_of_bid').count()
+                bids=bid
+                data= {"projects":i, "skills": project_skill, "bids": bids}
+                mylist.append(data)
+            total=len(mylist)
+            data1['all projects']=mylist
+            data1['total']=total
+            return Response(data1)
+        else:
+            data['message']="Not Found"
+            data['status']=102
+            return Response(data)
+    #     data = Proj.projects(request)
+    #     return Response(data, safe=False)
+
 
 
 
@@ -57,6 +85,7 @@ class SingleJob(AllProjects):
             courrencytype = Currency.objects.filter(id=var.currency_id).values('currency_type')
             data['currency']=courrencytype
             data['skills']=skills
+            data['status']=101
         return Response(data)
 
 
@@ -70,132 +99,128 @@ class Projects(APIView):
             size = 3
             code = 'PR' + ''.join(random.choice(string.digits + string.ascii_letters[26:]) for _ in range(size))
             string1 = request.data['project_title']
-            # cat=request.data['category_id']
-            # for k in cat:
-            #     print(k['id'])
-            # print(cat)
             user = request.user
             project = string1.replace(" ", "-")
             string2 = '-' + ''.join(choice(digits) for i in range(8))
             project_title1 = project + string2
             postproject1 = PostProject.objects.all()
             serializer = PostProjectSerializer(data=request.data)
-            if postproject1.exists():
-                for var in postproject1:
-
-                    if var.project_title == string1:
-                        # print("executing this 2")
-                        project_title12 = project_title1
-                        if serializer.is_valid():
-                            pro = serializer.save()
-                            pro.userid = user.id
-                            cat = request.data['category_id']
-                            cat1=json.dumps(cat)
-                            pro.category_id = cat1
-                            pro.project_code = code
-                            pro.username = user.username
-                            pro.route = project_title12
-                            pro.save()
-                            project_id = pro.id
-                            skillname = request.data['skills']
-                            for i in skillname:
-                                post = Skills.objects.create(skill_id=i['id'], project_id=project_id,
-                                                             skill_name=i['name'])
-                                post.save()
-                            data['result'] = 'success'
-                        else:
-                            data = serializer.errors
+            user_kyc = KycInfo.objects.filter(userid=user.id)
+            if user_kyc.exists():
+                for kyc in user_kyc:
+                    if kyc.kycstatus == 1:
+                        data['message'] = "You have uploaded kyc details wait for approve"
+                        data['status'] = 1
                         return Response(data)
+                    elif kyc.kycstatus == 2:
+                        data['message'] = "Your kyc is pending"
+                        data['status'] = 0
+                        return Response(data)
+                    elif kyc.kycstatus == 3:
+                        if postproject1.exists():
+                            for var in postproject1:
 
-                # print("executing this 3")
-                project_title2 = project
-                # print(project_title2)
-                if serializer.is_valid():
-                    pro = serializer.save()
-                    pro.userid = user.id
-                    cat = request.data['category_id']
-                    cat1 = json.dumps(cat)
+                                if var.project_title == string1:
+                                    # print("executing this 2")
+                                    project_title12 = project_title1
+                                    if serializer.is_valid():
+                                        pro = serializer.save()
+                                        pro.userid = user.id
+                                        cat = request.data['category_id']
+                                        cat1=json.dumps(cat)
+                                        pro.category_id = cat1
+                                        pro.project_code = code
+                                        pro.username = user.username
+                                        pro.route = project_title12
+                                        pro.save()
+                                        project_id = pro.id
+                                        skillname = request.data['skills']
+                                        for i in skillname:
+                                            post = Skills.objects.create(skill_id=i['id'], project_id=project_id,
+                                                                         skill_name=i['name'])
+                                            post.save()
+                                        data['result'] = 'success'
+                                    else:
+                                        data = serializer.errors
+                                    return Response(data)
 
-                    pro.category_id = cat1
+                            # print("executing this 3")
+                            project_title2 = project
+                            # print(project_title2)
+                            if serializer.is_valid():
+                                pro = serializer.save()
+                                pro.userid = user.id
+                                cat = request.data['category_id']
+                                cat1 = json.dumps(cat)
 
-                    pro.project_code = code
-                    pro.username = user.username
-                    pro.route = project_title2
-                    pro.save()
-                    project_id = pro.id
-                    skillname = request.data['skills']
-                    for i in skillname:
-                        post = Skills.objects.create(skill_id=i['id'], project_id=project_id,
-                                                     skill_name=i['name'])
-                        post.save()
-                    data['result'] = 'success'
-                else:
-                    data = serializer.errors
+                                pro.category_id = cat1
+
+                                pro.project_code = code
+                                pro.username = user.username
+                                pro.route = project_title2
+                                pro.save()
+                                project_id = pro.id
+                                skillname = request.data['skills']
+                                for i in skillname:
+                                    post = Skills.objects.create(skill_id=i['id'], project_id=project_id,
+                                                                 skill_name=i['name'])
+                                    post.save()
+                                data['result'] = 'success'
+                            else:
+                                data = serializer.errors
+                            return Response(data)
+
+                        else:
+
+                            project_title2 = project
+                            if serializer.is_valid():
+                                pro = serializer.save()
+                                pro.userid = user.id
+                                cat = request.data['category_id']
+                                cat1 = json.dumps(cat)
+
+                                pro.category_id = cat1
+
+                                pro.project_code = code
+                                pro.username = user.username
+                                pro.route = project_title2
+                                pro.save()
+
+                                project_id = pro.id
+                                skillname = request.data['skills']
+                                # print(skillname)
+                                for i in skillname:
+                                    post = Skills.objects.create(skill_id=i['id'], project_id=project_id, skill_name=i['name'])
+                                    post.save()
+                                data['result'] = 'success'
+                            else:
+                                data = serializer.errors
+                        return Response(data)
+                    else:
+                        if kyc.kycstatus == 4:
+                            data['message'] = "Your kyc have been rejected"
+                            data['status'] = 0
+                            return Response(data)
+            else:
+                data['message'] = "kyc details not entered"
+                data['status'] = 0
                 return Response(data)
 
-            else:
 
-                project_title2 = project
-                if serializer.is_valid():
-                    pro = serializer.save()
-                    pro.userid = user.id
-                    cat = request.data['category_id']
-                    cat1 = json.dumps(cat)
+def test():
+    testmessage="test it"
+    return JsonResponse(testmessage , safe=False)
 
-                    pro.category_id = cat1
+class HirerProjects(APIView):
+    permission_classes = (IsAuthenticated,)
 
-                    pro.project_code = code
-                    pro.username = user.username
-                    pro.route = project_title2
-                    pro.save()
-
-                    project_id = pro.id
-                    skillname = request.data['skills']
-                    # print(skillname)
-                    for i in skillname:
-                        post = Skills.objects.create(skill_id=i['id'], project_id=project_id, skill_name=i['name'])
-                        post.save()
-                    data['result'] = 'success'
-                else:
-                    data = serializer.errors
-            return Response(data)
-
-
-class ProjectOnSkill(APIView):
-    def get(self, request, skill_code):
-
-        skill = skill_code
-        mylist = []
-        value = Const_skills.objects.filter(skill_code=skill).values('id')
-        for i in value:
-            value1 = Skills.objects.filter(skill_id=i['id']).values('project_id')
-            for j in value1:
-                results = PostProject.objects.filter(id=j['project_id']).values('project_title', 'route')
-                mylist.append(results)
-
-        return Response(mylist)
-
-
-class ProjectOnSkill1(APIView):
-    # print(123445)
-
-    def get(self, request,skill_code1, skill_code2):
-        skill1=skill_code1
-        skill2=skill_code2
-        # projects = Skills.objects.filter(skills=skill1).values('project_title')
-        # print(projects)
-        # projects1 = PostProject.objects.filter(skill1=skill2).values('project_title')
-        # print(projects1)
+    def get(self,request):
+        user=request.user
+        id=user.id
+        projects =PostProject.objects.filter(userid=id).values('id', 'project_title', 'description', 'min', 'max',
+                                               'username','created_at','route').order_by('created_at').reverse()
         data={}
-
-        value = Skills.objects.filter(Q(skill_id=skill1) | Q(skill_id=skill2)).values('project_id')
-
-        mylist=[]
-        for var in value:
-            projects = PostProject.objects.filter(id=var['project_id']).values('project_title','route','project_code')
-            print(projects)
-            mylist.append(projects)
-
-        data['projects'] = mylist
-
+        data['projects']=projects
+        data['message']='success'
+        data['status']=100
         return Response(data)

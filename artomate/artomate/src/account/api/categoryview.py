@@ -86,6 +86,6 @@ class CategoryList(APIView):
             mylist.append(sub)
             mylist.append(skills)
             data={}
-            data['result']=mylist
+            data['result'] = mylist
 
             return Response(data)

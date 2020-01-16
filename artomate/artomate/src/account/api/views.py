@@ -1,3 +1,4 @@
+from django.contrib.auth.hashers import make_password
 from django.http import HttpResponse, JsonResponse, Http404
 from django.utils.translation import LANGUAGE_SESSION_KEY
 from rest_framework import status
@@ -19,7 +20,7 @@ from django.conf import settings
 from django.db.models import Max, Q, Count, Sum
 
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.permissions import AllowAny, IsAuthenticated, BasePermission
 from rest_framework.authentication import authenticate
 from rest_framework.status import (
     HTTP_400_BAD_REQUEST,
@@ -30,12 +31,12 @@ from django.contrib.auth import authenticate, user_logged_out
 from rest_framework.authtoken.models import Token
 from rest_framework.utils import json
 import jwt
+from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework_simplejwt.views import TokenObtainPairView
 
 from account.api import serializers
 from account.models import KycInfo, Account, Categories, PostProject, Userprofile, SubCategory, Skills, Budgets, \
-    Bidproject, No_of_bids_for_project, Const_skills, Json_data, Phone_OTP,User_Skills,country
-
+    Bidproject, No_of_bids_for_project, Const_skills, Json_data, Phone_OTP,User_Skills,country,BlackListedToken,user_languages,UserPortfolioProfile
 from rest_framework.views import APIView
 from django.core.mail import send_mail
 # from django.contrib.sites.shortcuts import get_current_site
@@ -59,9 +60,9 @@ def registration_view(request):
     user = request.data['username']
 
     if user == 'yes':
-        size=5
+        size = 5
 
-        string2 = 'Artomateuser' +''.join(choice(digits) for i in range(5))
+        string2 = 'user' +''.join(choice(digits) for i in range(5))
 
         randomstring =  string2
         serializer = RegistrationSerializer(data=request.data)
@@ -71,6 +72,7 @@ def registration_view(request):
             account = serializer.save()
             account.username = randomstring
             account.is_freelancer = 1
+            account.bid = 5
             account.save()
             data['response'] = 'Successfully registered'
         else:
@@ -84,6 +86,7 @@ def registration_view(request):
             account = serializer.save()
             account.username = ''
             account.is_freelancer = 0
+            account.bid = 5
             account.save()
             data['response'] = 'Successfully registered'
         else:
@@ -152,14 +155,13 @@ class DashboardView(APIView):
         user = request.user
         name = user.username
         id = user.id
-        Biddetails = Bidproject.objects.filter(user_id=id).count()
         totalbid = Bidproject.objects.filter(user_id=id).aggregate(Sum('bid_amount'))
         kyc_status = KycInfo.objects.filter(userid=user.id)
         data = {}
         data['user_name'] = name
         data['email']=request.user.email
-        data['no_of_bids'] = Biddetails
-        data['Task Bids Won'] = 5
+        for e in Account.objects.filter(id=id).values('bid'):
+            data['Bids'] = e['bid']
         data['Reviews'] = 2
         data['Completed_jobs'] = 2
         data['Monthly_Earnings'] = totalbid
@@ -169,28 +171,6 @@ class DashboardView(APIView):
         else:
                 data['kyc_status'] = 0
         return JsonResponse(data)
-
-
-class UserProfile(APIView):
-    permission_classes = (IsAuthenticated,)
-
-    def post(self, request):
-        user = request.user
-
-        serializer = UserProfileSerializer(data=request.data)
-        data = {}
-        if serializer.is_valid():
-            profile = serializer.save()
-            profile.name = user.username
-            profile.user_id = user.id
-            profile.email=user.email
-            profile.save()
-            data['result'] = 'success'
-            data['status'] = 1
-        else:
-            data['status'] = 0
-            data = serializer.errors
-        return Response(data)
 
 
 
@@ -216,36 +196,6 @@ class ProfileVeiw(APIView):
 
         return Response(data)
 
-class UpdateProfile(APIView):
-    permission_classes = (IsAuthenticated,)
-
-    def post(self,request):
-        if request.method=='POST':
-            user=request.user
-            profile = Userprofile.objects.filter(user_id=user.id).values()
-            for var in profile:
-                print(var)
-        return Response("done")
-
-
-class updateuserprofile(APIView):
-    permission_classes = (IsAuthenticated,)
-    def post(self,request):
-        user = request.user
-        # user_id = user.id
-        userprofile = Userprofile.objects.get(user_id=user.id)
-        userprofile.first_name = request.data['first_name']
-        userprofile.last_name = request.data['last_name']
-        userprofile.email = request.data['email']
-        userprofile.hourely_rate = request.data['hourely_rate']
-        userprofile.portfolio = request.data['portfolio']
-        userprofile.designation = request.data['designation']
-        userprofile.description = request.data['description']
-        userprofile.save()
-        return Response("success")
-
-
-
 
 @api_view(["GET"])
 def generate(size):
@@ -267,23 +217,145 @@ class BudgetsDetails(APIView):
 
 
 class UsernameValidation(APIView):
+    permission_classes  =(IsAuthenticated,)
+
     def post(self, request):
         if request.method == 'POST':
             name = request.data['username']
+            data={}
 
             usernameval = Account.objects.filter(username=name)
             if usernameval.exists():
-                return Response('Username already taken', status=HTTP_404_NOT_FOUND)
+                data['message']="Username already taken"
+                data['status']=1
+                return Response(data)
             else:
-                return Response('Success', status=HTTP_200_OK)
+                return Response('', status=HTTP_200_OK)
+
+
+
+class UsernameValidation123(APIView):
+    permission_classes  =(IsAuthenticated,)
+
+    def get(self, request):
+        try:
+            if request.method == 'GET':
+                name = request.data['username']
+                data={}
+
+                usernameval = Account.objects.filter(username=name)
+                if usernameval.exists():
+                    data['message']="Username already taken"
+                    data['status']=1
+                    return Response(data)
+                else:
+                    return Response('', status=HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=500)
 
 
 class FreelancerView(APIView):
-    def get(self, request,userid):
-        user = Account.objects.filter(id=userid).values('email','username','date_joined')
-        data={}
-        data['Freelancer']=user
-        return Response(data)
+    def get(self, request,username):
+        user = Account.objects.filter(username=username).values('email','date_joined')
+        data = {}
+        data1={}
+        mylist=[]
+        userprof = Userprofile.objects.filter(user_name=username).values('user_name', 'designation', 'hourely_rate','description','profile','user_id','country_id')
+        if userprof.exists():
+            for i in user:
+
+                for j in userprof:
+                    data={
+                        'name':KycInfo.objects.filter(userid=j['user_id']).values('fullname'),
+                        'designation':j['designation'],
+                        'hourely_rate':j['hourely_rate'],
+                        'profile':j['profile'],
+                        'location':country.objects.filter(id=j['country_id']).values('country_name'),
+                        'ratings':3,
+                        'jobscompleted':3,
+                        'skills':User_Skills.objects.filter(user_id=j['user_id']).values('skill_name'),
+                        'language':user_languages.objects.filter(user_id=j['user_id']).values('language_name'),
+                        'portfolio':UserPortfolioProfile.objects.filter(user_id=j['user_id']).values('project_name','project_images','project_description')
+                    }
+                    mylist.append(data)
+                    data1['data']=mylist
+                    data1['status']=100
+                    data1['message']='success'
+            return Response(data1)
+        else:
+            data = {}
+            data['message'] = "Not Found"
+            data['status'] = 102
+            return Response(data)
+
+class FilterFreelancerList(APIView):
+        def post(self,request):
+            data1={}
+            data={}
+            if 'fullname' in request.data:
+                full_name =request.data['fullname']
+                name=full_name[:3]
+                if  not full_name:
+                    data['message']="enter fullname"
+                    return Response(data)
+                else:
+                    userdetails = KycInfo.objects.filter(fullname__startswith=name).values('fullname', 'userid')
+                    if userdetails.exists():
+                        mylist = []
+                        list=userdetails
+                        for i in list:
+                            id=i['userid']
+
+                            user = Userprofile.objects.filter(user_id=id).values('user_name', 'designation', 'hourely_rate', 'description',
+                                                                    'profile', 'user_id', 'country_id')
+
+                            for j in user:
+                                data = {
+                                    "fullname": i['fullname'],
+                                    "freelancer": j,
+                                    "location": country.objects.filter(id=j['country_id']).values('country_name'),
+                                    "ratings": 4,
+                                    "jobscompleted": 2
+                                }
+                                mylist.append(data)
+                        data1['data']=mylist
+                        data1['total']=len(mylist)
+
+                        return Response(data1)
+                    else:
+                        data['message']="Not Found"
+                        data['status']=102
+                        return Response(data)
+
+            else:
+                data['message'] = "enter fullname"
+                return Response(data)
+
+
+
+
+class FreelancerList(APIView):
+        def get(self, request):
+            user = Userprofile.objects.all().values('user_name', 'designation', 'hourely_rate', 'description',
+                                                    'profile', 'user_id','country_id')
+            if user.exists():
+                mylist = []
+                for i in user:
+
+                    data = {
+                        "fullname":KycInfo.objects.filter(userid=i['user_id']).values('fullname'),
+                        "freelancer": i,
+                        "location": country.objects.filter(id=i['country_id']).values('country_name'),
+                        "ratings": 4,
+                        "jobscompleted": 2
+                    }
+                    mylist.append(data)
+                return Response(mylist)
+            else:
+                data = {}
+                data['message'] = "Not Found"
+                data['status'] = 102
+                return Response(data)
 
 class TestJson(APIView):
     def post(self, request):
@@ -400,28 +472,34 @@ class MyTokenObtain(TokenObtainPairView):
 
 
 
-class Logout(APIView):
+class Logout1(APIView):
     permission_classes = (IsAuthenticated,)
 
-    def get(self, request):
-        user = request.user
-        user = getattr(request, 'user', None)
-        if not getattr(user, 'is_authenticated', True):
-            user = None
-        user_logged_out.send(sender=user.__class__, request=request, user=user)
+    def post(self,request):
+        user=request.user
+        print(user.id)
+        userdetails = Account.objects.filter(id=user.id).values('is_active')
+        userdetails.update(is_active=0)
 
-        # remember language choice saved to session
-        language = request.session.get(LANGUAGE_SESSION_KEY)
+        return Response("user logged out")
 
-        request.session.flush()
 
-        if language is not None:
-            request.session[LANGUAGE_SESSION_KEY] = language
+class JSONWebTokenAuthentication(object):
+    pass
 
-        if hasattr(request, 'user'):
-            from django.contrib.auth.models import AnonymousUser
-            request.user = AnonymousUser()
 
-        print(user.username)
+class Logout(APIView):
+    permission_classes = (IsAuthenticated, )
+    authentication_classes = (JWTAuthentication, )
 
-        return Response('done')
+    def post(self, request):
+        # simply delete the token to force a login
+        req= request.META.get('HTTP_AUTHORIZATION')
+
+        # JWTAuth::parseToken()->invalidate($token);
+        print(req)
+
+        req.delete()
+        print(req)# This will not work
+        return Response(status=status.HTTP_200_OK)
+

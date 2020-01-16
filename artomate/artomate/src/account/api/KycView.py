@@ -1,3 +1,4 @@
+from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.status import (
     HTTP_400_BAD_REQUEST,
@@ -9,6 +10,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from account.models import KycInfo,country,Experiance
 from account.api.serializers import  KYCInfoSerializer
+from mysite import settings
 
 
 class KycView(APIView):
@@ -19,36 +21,39 @@ class KycView(APIView):
     def post(self, request):
         if request.method == 'POST':
             user = request.user
-            if not user:
-                return Response({'error': 'Invalid Credentials'}, status=HTTP_200_OK)
-            else:
+            # idprooffront = request.data['idprooffront']
+            # if image:
+            #     if idprooffront._size > settings.MAX_IMAGE_SIZE:
+            #         raise ValidationError("Image file too large ( > 20mb )")
+            # else:
+            #     raise ValidationError("Couldn't read uploaded image")
+            # # print(user)
+            id = user.id
+            postpro = KycInfo.objects.filter(userid=id)
 
-                # print(user)
-                id = user.id
-                postpro = KycInfo.objects.filter(userid=id)
+            if postpro.exists():
+                for kycstat in postpro:
 
-                if postpro.exists():
-                    for kycstat in postpro:
-                        serializer = KYCInfoSerializer(data=request.data)
-                        data = {}
-                        if kycstat.kycstatus == 1:
-                            data['result'] = 'allready entered kyc details'
-                            data['status'] = 0
-                else:
-                    serializer = KYCInfoSerializer(data=request.data)
                     data = {}
-                    if serializer.is_valid():
-                        kyc = serializer.save()
-                        kyc.username = user.username
-                        kyc.userid = user.id
-                        kyc.kycstatus = 1
-                        kyc.save()
-                        data['result'] = 'success'
-                        data['status'] = 1
-                    else:
+                    if kycstat.kycstatus == 1:
+                        data['result'] = 'allready entered kyc details'
                         data['status'] = 0
-                        data = serializer.errors
-            return Response(data)
+            else:
+                serializer = KYCInfoSerializer(data=request.data)
+                data = {}
+                if serializer.is_valid():
+                    kyc = serializer.save()
+                    kyc.username = user.username
+                    kyc.userid = user.id
+                    kyc.kycstatus = 1
+                    kyc.save()
+                    data['result'] = 'success'
+                    data['status'] = 1
+                    return Response(data)
+                else:
+                    data['status'] = 0
+                    data = serializer.errors
+                    return Response(data)
 
 
 

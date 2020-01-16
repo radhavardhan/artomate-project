@@ -60,19 +60,20 @@ AUTH_USER_MODEL = 'account.Account'
 
 REST_FRAMEWORK = {
 
-    # 'DEFAULT_PERMISSION_CLASSES': (
-    #     'rest_framework.permissions.IsAuthenticated',
-    #     ),
-
    'DEFAULT_AUTHENTICATION_CLASSES': (
        'rest_framework_simplejwt.authentication.JWTAuthentication',
         # 'rest_framework.authentication.TokenAuthentication',
+
    ),
+    # 'DEFAULT_PAGINATION_CLASS':  'rest_framework.pagination.PageNumberPagination',
+    #     'PAGE_SIZE': 1
 
 }
+
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': datetime.timedelta(days=30),
 }
+
 #
 # JWT_AUTH = {    'JWT_VERIFY': True,    'JWT_VERIFY_EXPIRATION': True,    'JWT_EXPIRATION_DELTA': datetime.timedelta(seconds=3000),    'JWT_AUTH_HEADER_PREFIX': 'Bearer',}
 
@@ -85,6 +86,8 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+
+MAX_IMAGE_SIZE="100"
 
 ROOT_URLCONF = 'mysite.urls'
 
