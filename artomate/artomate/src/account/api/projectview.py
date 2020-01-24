@@ -47,8 +47,11 @@ class AllProjects(APIView):
             for i in queryset:
                 project_skill = Skills.objects.filter(project_id=i['id']).values('skill_name')
                 bid = Bidproject.objects.filter(project_id=i['id']).values('no_of_bid').count()
-                bids=bid
-                data= {"projects":i, "skills": project_skill, "bids": bids}
+
+
+
+                data= {"projects":i, "skills": project_skill, "bids": bid}
+
                 mylist.append(data)
             total=len(mylist)
             data1['all projects']=mylist
@@ -84,7 +87,14 @@ class SingleJob(AllProjects):
             data['country']=countryname
             courrencytype = Currency.objects.filter(id=var.currency_id).values('currency_type')
             data['currency']=courrencytype
-            data['skills']=skills
+            data['skills'] = skills
+            data['custombudget']=var.custom_budget
+            biddeatils = Bidproject.objects.filter(project_id=var.id).values('bid_amount', 'user_id',
+                                                                              'completion_time', 'email')
+            norofbid = Bidproject.objects.filter(project_id=var.id).count()
+            data['no_of_bid'] = norofbid
+            data['bid details'] = biddeatils
+            data['message']="success"
             data['status']=101
         return Response(data)
 
@@ -211,16 +221,4 @@ def test():
     testmessage="test it"
     return JsonResponse(testmessage , safe=False)
 
-class HirerProjects(APIView):
-    permission_classes = (IsAuthenticated,)
 
-    def get(self,request):
-        user=request.user
-        id=user.id
-        projects =PostProject.objects.filter(userid=id).values('id', 'project_title', 'description', 'min', 'max',
-                                               'username','created_at','route').order_by('created_at').reverse()
-        data={}
-        data['projects']=projects
-        data['message']='success'
-        data['status']=100
-        return Response(data)

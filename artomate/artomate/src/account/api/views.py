@@ -1,3 +1,4 @@
+import uuid
 from django.contrib.auth.hashers import make_password
 from django.http import HttpResponse, JsonResponse, Http404
 from django.utils.translation import LANGUAGE_SESSION_KEY
@@ -490,16 +491,11 @@ class JSONWebTokenAuthentication(object):
 
 class Logout(APIView):
     permission_classes = (IsAuthenticated, )
-    authentication_classes = (JWTAuthentication, )
 
     def post(self, request):
-        # simply delete the token to force a login
-        req= request.META.get('HTTP_AUTHORIZATION')
+        user =request.user
+        user.jwt_secret=uuid.uuid4()
+        user.save()
 
-        # JWTAuth::parseToken()->invalidate($token);
-        print(req)
-
-        req.delete()
-        print(req)# This will not work
         return Response(status=status.HTTP_200_OK)
 

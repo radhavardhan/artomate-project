@@ -1,3 +1,4 @@
+import uuid as uuid
 from django.core.validators import RegexValidator
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
@@ -62,6 +63,7 @@ class Account(AbstractBaseUser):
     is_superuser = models.BooleanField(default=False)
     is_freelancer = models.IntegerField(default=False)
     bid = models.IntegerField(default=False)
+    uuid = models.UUIDField(unique=True,default=uuid.uuid4)
     # phone = models.IntegerField(default=False)
 
     USERNAME_FIELD = 'email'
@@ -90,6 +92,8 @@ class KycInfo(models.Model):
     idproofback = models.ImageField(upload_to='')
     kycstatus = models.IntegerField(null=True)
     username = models.CharField(max_length=100, default=None, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
 
 class country(models.Model):
@@ -103,6 +107,7 @@ class country(models.Model):
 class Categories(models.Model):
     category_name = models.CharField(max_length=50)
     category_code = models.CharField(max_length=60, default=None, null=True, unique=True)
+    category_image =models.FileField(upload_to='',default=None)
 
 
 class SubCategory(models.Model):
@@ -234,6 +239,8 @@ class Bidproject(models.Model):
     no_of_bid = models.IntegerField(default=None, null=True)
     completion_time = models.IntegerField(default=None)
     descreption = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
 
 class No_of_bids_for_project(models.Model):

@@ -53,48 +53,49 @@ class FreelancerView(APIView):
             data['status'] = 102
             return Response(data)
 
+
 class FilterFreelancerList(APIView):
-        def post(self,request):
-            data1={}
-            data={}
-            if 'fullname' in request.data:
-                full_name =request.data['fullname']
-                name=full_name[:3]
-                if  not full_name:
-                    data['message']="enter fullname"
-                    return Response(data)
-                else:
-                    userdetails = KycInfo.objects.filter(fullname__startswith=name).values('fullname', 'userid')
-                    if userdetails.exists():
-                        mylist = []
-                        list=userdetails
-                        for i in list:
-                            id=i['userid']
+    def post(self, request):
+        data1 = {}
+        data = {}
+        if 'search' in request.data:
+            search_name = request.data['name']
+            name = search_name[:3]
+            print(name)
+            userdetails = KycInfo.objects.filter(fullname__startswith=name).values('fullname', 'userid')
+            print(userdetails)
 
-                            user = Userprofile.objects.filter(user_id=id).values('user_name', 'designation', 'hourely_rate', 'description',
-                                                                    'profile', 'user_id', 'country_id')
+            if userdetails.exists():
+                mylist = []
+                list = userdetails
+                for i in list:
+                    id = i['userid']
 
-                            for j in user:
-                                data = {
-                                    "fullname": i['fullname'],
-                                    "freelancer": j,
-                                    "location": country.objects.filter(id=j['country_id']).values('country_name'),
-                                    "ratings": 4,
-                                    "jobscompleted": 2
-                                }
-                                mylist.append(data)
-                        data1['data']=mylist
-                        data1['total']=len(mylist)
+                    user = Userprofile.objects.filter(user_id=id).values('user_name', 'designation', 'hourely_rate',
+                                                                         'description',
+                                                                         'profile', 'user_id', 'country_id')
 
-                        return Response(data1)
-                    else:
-                        data['message']="Not Found"
-                        data['status']=102
-                        return Response(data)
+                    for j in user:
+                        data = {
+                            "fullname": i['fullname'],
+                            "freelancer": j,
+                            "location": country.objects.filter(id=j['country_id']).values('country_name'),
+                            "ratings": 4,
+                            "jobscompleted": 2
+                        }
+                        mylist.append(data)
+                data1['data'] = mylist
+                data1['total'] = len(mylist)
 
+                return Response(data1)
             else:
-                data['message'] = "enter fullname"
+                data['message'] = "Not Found"
+                data['status'] = 102
                 return Response(data)
+
+        else:
+            data['message'] = "enter fullname"
+            return Response(data)
 
 
 
@@ -294,14 +295,15 @@ class SearchFilter(APIView):
 
                             for j in value1:
                                 results = PostProject.objects.filter(id=j['project_id']).values('id', 'project_title',
-                                                                                                'description', 'min', 'max',
-                                                                                                'username', 'created_at',
-                                                                                                'route')
+                                                                                                'description', 'min', 'max','custom_budget','country_id','currency_id',
+                                                                                                'username','route')
                                 for k in results:
                                     project_skill = Skills.objects.filter(project_id=k['id']).values('skill_name')
                                     bid = Bidproject.objects.filter(project_id=k['id']).values('no_of_bid').count()
+                                    countryname =country.objects.filter(id=k['country_id']).values('country_name')
+                                    currencyname=Currency.objects.filter(id=k['currency_id']).values('currency_type')
                                     bids = bid
-                                    data = {"projects": k, "skills": project_skill, "bids": bids}
+                                    data = {"projects": k,"countryname":countryname,"currencytype":currencyname, "skills": project_skill, "bids": bids}
                                     mylist.append(data)
 
                             data1['data'] = mylist
@@ -384,5 +386,30 @@ class SearchFilter(APIView):
 
 
 
+class SearchJobOnExperience(APIView):
+    def get(self,request,exp_id):
+        mylist = []
+        data1 = {}
+        results = PostProject.objects.filter(experience_required=exp_id).values('id', 'project_title',
+                                                                        'description', 'min', 'max',
+                                                                        'username', 'created_at',
+                                                                            'route')
+        if results.exists():
+            for k in results:
+                project_skill = Skills.objects.filter(project_id=k['id']).values('skill_name')
+                bid = Bidproject.objects.filter(project_id=k['id']).values('no_of_bid').count()
+                bids = bid
+                data = {"projects": k, "skills": project_skill, "bids": bids}
+                mylist.append(data)
 
+            data1['data'] = mylist
+            data1['totalcount'] = len(mylist)
+            data1['message']= 'success'
+            data1['status']= 100
+            return Response(data1)
 
+        else:
+            data = {}
+            data['message'] = "Not Found"
+            data['status'] = 102
+            return Response(data)

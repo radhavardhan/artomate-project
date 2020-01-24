@@ -19,15 +19,10 @@ class KycView(APIView):
 
 
     def post(self, request):
+        data = {}
         if request.method == 'POST':
             user = request.user
-            # idprooffront = request.data['idprooffront']
-            # if image:
-            #     if idprooffront._size > settings.MAX_IMAGE_SIZE:
-            #         raise ValidationError("Image file too large ( > 20mb )")
-            # else:
-            #     raise ValidationError("Couldn't read uploaded image")
-            # # print(user)
+
             id = user.id
             postpro = KycInfo.objects.filter(userid=id)
 
@@ -40,7 +35,7 @@ class KycView(APIView):
                         data['status'] = 0
             else:
                 serializer = KYCInfoSerializer(data=request.data)
-                data = {}
+
                 if serializer.is_valid():
                     kyc = serializer.save()
                     kyc.username = user.username
@@ -53,7 +48,7 @@ class KycView(APIView):
                 else:
                     data['status'] = 0
                     data = serializer.errors
-                    return Response(data)
+            return Response(data)
 
 
 

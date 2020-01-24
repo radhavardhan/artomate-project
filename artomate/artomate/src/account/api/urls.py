@@ -44,7 +44,8 @@ urlpatterns = [
     path('projectlist',projectview.AllProjects.as_view()),
     path('singlejob/<str:projectroute>',projectview.SingleJob.as_view()),
     path('testfunction', projectview.Proj.as_view()),
-    path('hirerprojects',projectview.HirerProjects.as_view()),
+
+
 
     # reverse('projects_on_skills',projectview.ProjectOnSkill1.as_view(), *args),
 
@@ -53,7 +54,7 @@ urlpatterns = [
     path('skill_view', skillview.Skill_view.as_view()),
     path('projects_on_skills/<str:skill_code>', skillview.ProjectOnSkill.as_view()),
     path('projects_on_skills2/<str:skill_code1>/<str:skill_code2>', skillview.ProjectOnSkill1.as_view()),
-    path('projects_on_skills3', skillview.ProjectOnSkill12.as_view()),
+    path('projects_on_skills3', skillview.ProjectOnSkill13.as_view()),
     path('freelancer_on_skills/<str:skill_code>', skillview.UserOnSkill.as_view()),
 
 
@@ -83,11 +84,13 @@ urlpatterns = [
     path('freelancer/<str:username>', freelancerview.FreelancerView.as_view()),
     path('searchfreelanceronname',freelancerview.FilterFreelancerList.as_view()),
     path('searchfreelanceronskill',freelancerview.FilterFreelanerOnSkill.as_view()),
+
     path('filterfreelanceroncountry/<int:country_id>',freelancerview.FilterFreelancerOnCountry.as_view()),
     path('filterfreelanceronlang/<int:lang_id>',freelancerview.FreelancerOnLanguage.as_view()),
 
             #searchfilter
     path('searchfilter',freelancerview.SearchFilter.as_view()),
+    path('filterjobsonexperience/<int:exp_id>', freelancerview.SearchJobOnExperience.as_view()),
 
 
 
@@ -108,8 +111,15 @@ urlpatterns = [
         # bid view
     path('bidproject',bidview.BidRequest.as_view()),
     # path('projectsbidview',bidview.ProjectsBidViews.as_view()),
-    path('norofbidforproject',bidview.No_Of_Bid.as_view()),
+
+            # hirer posted job details
+    path('hirerprojects',bidview.HirerProjects.as_view()),
+            # bid details of each project
     path('biddetailsofproject/<str:projectroute>',bidview.Bid_Details_Project.as_view()),
+            #users bid details of each project
+    path('usersbiddeatilsproject',bidview.No_Of_Bid.as_view()),
+
+
     path('selectbid',bidview.Select_Bid.as_view()),
 
     path('testjson', views.TestJson.as_view()),

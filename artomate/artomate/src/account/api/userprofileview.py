@@ -94,17 +94,24 @@ class updateuserprofile(APIView):
                 if 'user_name' in request.data:
                     name = request.data['user_name']
                     name1 =name.replace(" ","")
-
+                    print(name)
                     if not name:
                         data['message'] = "enter user name"
                         data['status'] = 102
                         return Response(data)
                     else:
+                        print(123455)
                         usernameval = Account.objects.filter(username=name1).values('id')
-                        for i in usernameval:
-                            j=i['id']
-                        if j == user_id:
+                        if usernameval.exists():
+                            print(4)
+                            data['message'] = "Username already exists"
+                            data['status'] = 102
+                            return Response(data)
+                        else:
+
+                            print('test')
                             userupdate = Userprofile.objects.filter(user_id=user_id)
+                            print(1)
                             if userupdate.exists():
                                 print(1243)
                                 userprofile12 = Account.objects.get(id=user_id)
@@ -144,6 +151,7 @@ class updateuserprofile(APIView):
                                 data['status'] = 100
                                 return Response(data)
                             else:
+                                print(2)
                                 user = request.user
                                 user_id = user.id
                                 data = {}
@@ -180,13 +188,12 @@ class updateuserprofile(APIView):
                                     data['status'] = 0
                                     data = serializer.errors
                                     return Response(data)
-                        else:
-                            data['message'] = "Username already exists"
-                            data['status'] = 102
-                            return Response(data)
+
+
 
 
                 else:
+                    print(7)
                     userupdate = Userprofile.objects.filter(user_id=user_id)
                     if userupdate.exists():
                         print(1243)

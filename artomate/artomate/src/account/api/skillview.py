@@ -1,11 +1,11 @@
 import random
 import string
 
-from django.db.models import Q
+from django.db.models import Q, Count
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from account.models import Const_skills,Skills,PostProject,Bidproject,User_Skills,Userprofile,KycInfo,country
-from account.api.serializers import  Const_SkillSerializer
+from account.models import Const_skills, Skills, PostProject, Bidproject, User_Skills, Userprofile, KycInfo, country
+from account.api.serializers import Const_SkillSerializer
 from account.api import projectview
 from django.http import HttpResponse, JsonResponse, Http404
 
@@ -18,7 +18,6 @@ class Skill_view(APIView):
         data = {}
         data['skills'] = skills
         return Response(data)
-
 
 
 class Const_Skill_Add(APIView):
@@ -40,13 +39,14 @@ class Const_Skill_Add(APIView):
                 data = serializer.errors
             return Response(data)
 
+
 class ProjectOnSkill(APIView):
     def get(self, request, skill_code):
 
         skill = skill_code
         mylist = []
-        data={}
-        data1={}
+        data = {}
+        data1 = {}
         value = Const_skills.objects.filter(skill_code=skill).values('id')
         if value.exists():
 
@@ -56,8 +56,10 @@ class ProjectOnSkill(APIView):
                 if value1.exists():
 
                     for j in value1:
-                        results = PostProject.objects.filter(id=j['project_id']).values('id', 'project_title', 'description', 'min', 'max',
-                                                              'username', 'created_at','route')
+                        results = PostProject.objects.filter(id=j['project_id']).values('id', 'project_title',
+                                                                                        'description', 'min', 'max',
+                                                                                        'username', 'created_at',
+                                                                                        'route')
                         for k in results:
                             project_skill = Skills.objects.filter(project_id=k['id']).values('skill_name')
                             bid = Bidproject.objects.filter(project_id=k['id']).values('no_of_bid').count()
@@ -65,8 +67,8 @@ class ProjectOnSkill(APIView):
                             data = {"projects": k, "skills": project_skill, "bids": bids}
                             mylist.append(data)
 
-                    data1['data']=mylist
-                    data1['totalcount']= len(mylist)
+                    data1['data'] = mylist
+                    data1['totalcount'] = len(mylist)
 
                     return Response(data1)
                 else:
@@ -81,28 +83,27 @@ class ProjectOnSkill(APIView):
             return Response(data)
 
 
-
 class UserOnSkill(APIView):
     def get(self, request, skill_code):
 
         skill = skill_code
         mylist = []
-        data={}
-        data1={}
+        data = {}
+        data1 = {}
         value = Const_skills.objects.filter(skill_code=skill).values('id')
         if value.exists():
-
 
             for i in value:
                 value1 = User_Skills.objects.filter(skill_id=i['id']).values('user_id')
                 if value1.exists():
 
-
                     for j in value1:
-                        results = Userprofile.objects.filter(user_id=j['user_id']).values('user_name', 'designation', 'hourely_rate', 'description',
-                                                                'profile', 'user_id', 'country_id')
+                        results = Userprofile.objects.filter(user_id=j['user_id']).values('user_name', 'designation',
+                                                                                          'hourely_rate', 'description',
+                                                                                          'profile', 'user_id',
+                                                                                          'country_id')
 
-                        userfullname=KycInfo.objects.filter(userid=j['user_id']).values('fullname')
+                        userfullname = KycInfo.objects.filter(userid=j['user_id']).values('fullname')
 
                         for k in userfullname:
 
@@ -116,8 +117,8 @@ class UserOnSkill(APIView):
                                 }
 
                                 mylist.append(data)
-                    data1['data']=mylist
-                    data1['total']=len(mylist)
+                    data1['data'] = mylist
+                    data1['total'] = len(mylist)
 
                     return Response(data1)
                 else:
@@ -127,44 +128,51 @@ class UserOnSkill(APIView):
                     return Response(data)
 
         else:
-            data={}
-            data['message']="Not Found"
-            data['status']=102
+            data = {}
+            data['message'] = "Not Found"
+            data['status'] = 102
             return Response(data)
 
 
 class ProjectOnSkill1(APIView):
     # print(123445)
 
-    def get(self, request,skill_code1, skill_code2):
-        skill1=skill_code1
-        skill2=skill_code2
-        data={}
+    def get(self, request, skill_code1, skill_code2):
+        skill1 = skill_code1
+        skill2 = skill_code2
+        data = {}
         # print(skill_code1,skill_code2)
         value = Skills.objects.filter(Q(skill_id=skill1) | Q(skill_id=skill2)).values('project_id')
         # print(123)
 
-        mylist=[]
+        mylist = []
         for var in value:
-            projects = PostProject.objects.filter(id=var['project_id']).values('project_title','route','project_code')
-            print(projects)
+            projects = PostProject.objects.filter(id=var['project_id']).values('project_title', 'route', 'project_code')
+            # print(projects)
             mylist.append(projects)
 
         data['projects'] = mylist
 
         return Response(data)
 
-class ProjectOnSkill12(APIView):
 
-    def post(self,request):
-        skill= request.data['skill_code']
+class ProjectOnSkill13(APIView):
 
-        for i in skill:
-            print(i)
-        return Response("done")
+    def post(self, request):
+        project_list = []
+        project_id=[]
+        skills = request.data['skills']
+        for i in skills:
+            var = Skills.objects.filter(skill_id=i['id']).values('project_id')
+            # project_id.append(var)
+            # print(project_id)
+            for j in var:
+                projects = PostProject.objects.filter(id=j['project_id']).values('id','project_title', 'route', 'project_code')
+                project_list.append(projects)
+        return Response(project_list)
 
 
 class TestFunctions(APIView):
-    def get(self,request):
+    def get(self, request):
         foo = projectview.test()
-        return JsonResponse(foo,safe=False)
+        return JsonResponse(foo, safe=False)

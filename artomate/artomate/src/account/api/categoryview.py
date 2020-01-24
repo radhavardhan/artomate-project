@@ -12,7 +12,7 @@ import string
 from random import choice
 from string import ascii_lowercase, digits, hexdigits
 from rest_framework.views import APIView
-from account.models import Categories,SubCategory,Const_skills
+from account.models import Categories,SubCategory,Const_skills,PostProject
 from account.api.serializers import  CategoriesSerializer,SubCategorySerializer
 
 
@@ -40,10 +40,17 @@ class Category(APIView):
 
 class AllCategories(APIView):
     def get(self, request):
-        allcategories = Categories.objects.all().values()
-        data = {}
-        data['categpries'] = allcategories
-        return Response(data)
+
+        mylist=[]
+        data1={}
+        allcategories = Categories.objects.all().values('id','category_name','category_image')
+        for i in allcategories:
+            projects = PostProject.objects.filter(category_id=i['id']).count()
+            data = {"categpries": i, "no of posted jobs": projects}
+            mylist.append(data)
+        data1['data'] = mylist
+        data1['total']=len(mylist)
+        return Response(data1)
 
 
 class SubCategory1(APIView):

@@ -8,7 +8,7 @@ from rest_framework.status import (
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from account.models import PostProject, Bidproject, Account,Hirer_bid_select,KycInfo,Userprofile
+from account.models import PostProject, Bidproject, Account,Hirer_bid_select,KycInfo,Userprofile,country
 from account.api.serializers import BidProjectSerializer,HirerSelectBidSerializer
 
 
@@ -20,113 +20,116 @@ class BidRequest(APIView):
         if request.method == 'POST':
             user = request.user
             id = user.id
+
             email = user.email
             # print(email)
             data = {}
             project_code = request.data['project_code']
-            project_bid = PostProject.objects.get(project_code=project_code)
-            bid=Bidproject.objects.all()
-            no_of_bid = Bidproject.objects.filter(project_code=project_code).count()
-            user_kyc = KycInfo.objects.filter(userid=user.id)
-            if user_kyc.exists():
-                for kyc in user_kyc:
-                    if kyc.kycstatus == 1:
-                        data['message']="You have uploaded kyc details wait for approve"
-                        data['status'] = 101
-                        return Response(data)
-                    elif kyc.kycstatus == 2:
-                        data['message']="Your kyc is pending"
-                        data['status'] = 101
-                        return Response(data)
-                    elif kyc.kycstatus == 3:
-                        if bid.exists():
-                            mylist = []
-                            bid1 = Bidproject.objects.filter(project_code=project_code)
-                            for var in bid1:
-                                mylist.append(var.user_id)
-                                # print(var)
+            project_bid = PostProject.objects.filter(project_code=project_code).values('id', 'project_title', 'description', 'min', 'max',
+                                              'username', 'created_at','route','userid')
 
-                            if id in mylist:
-                                data['response'] = 'You have already bid for this project'
-                                data['status'] = 0
-                                return Response(data)
+            for i in project_bid:
 
-                            else:
-                                serializer = BidProjectSerializer(data=request.data)
-                                data = {}
-                                if serializer.is_valid():
-                                    bids = serializer.save()
-                                    bids.project_name = project_bid.route
-                                    bids.email = email
-                                    bids.project_id = project_bid.id
-                                    bids.user_id = id
-                                    bids.no_of_bid = no_of_bid + 1
-                                    user_bid = Account.objects.filter(id=id).values('bid')
-                                    for e in user_bid:
-                                        j = e['bid'] - 1
-                                        user_bid.update(bid=j)
-                                    bids.save()
-
-                                    data['result'] = 'success'
-                                    data['status'] = 101
-                                else:
-                                    data = serializer.errors
-                                    data['status'] = 0
-                                return Response(data)
-                        else:
-                            serializer = BidProjectSerializer(data=request.data)
-                            data = {}
-                            if serializer.is_valid():
-                                bids = serializer.save()
-                                bids.project_name = project_bid.route
-                                bids.email = email
-                                bids.project_id = project_bid.id
-                                bids.user_id = id
-                                bids.no_of_bid = no_of_bid + 1
-                                user_bid = Account.objects.filter(id=id).values('bid')
-                                for e in user_bid:
-                                    j = e['bid'] - 1
-                                    user_bid.update(bid=j)
-                                bids.save()
-                                data['result'] = 'success'
+                if id == i['userid']:
+                    data['message']="cant bid"
+                    data['status']=102
+                    return Response(data)
+                else:
+                    bid=Bidproject.objects.all()
+                    no_of_bid = Bidproject.objects.filter(project_code=project_code).count()
+                    user_kyc = KycInfo.objects.filter(userid=user.id)
+                    if user_kyc.exists():
+                        for kyc in user_kyc:
+                            if kyc.kycstatus == 1:
+                                data['message']="You have uploaded kyc details wait for approve"
                                 data['status'] = 101
+                                return Response(data)
+                            elif kyc.kycstatus == 2:
+                                data['message']="Your kyc is pending"
+                                data['status'] = 101
+                                return Response(data)
+                            elif kyc.kycstatus == 3:
+                                if bid.exists():
+                                    mylist = []
+                                    bid1 = Bidproject.objects.filter(project_code=project_code)
+                                    for var in bid1:
+                                        mylist.append(var.user_id)
+                                        # print(var)
+
+                                    if id in mylist:
+                                        data['response'] = 'You have already bid for this project'
+                                        data['status'] = 0
+                                        return Response(data)
+
+                                    else:
+                                        serializer = BidProjectSerializer(data=request.data)
+                                        data = {}
+                                        if serializer.is_valid():
+                                            bids = serializer.save()
+                                            bids.project_name = i['route']
+                                            bids.email = email
+                                            bids.project_id = i['id']
+                                            bids.user_id = id
+                                            bids.no_of_bid = no_of_bid + 1
+                                            user_bid = Account.objects.filter(id=id).values('bid')
+                                            for e in user_bid:
+                                                j = e['bid'] - 1
+                                                user_bid.update(bid=j)
+                                            bids.save()
+
+                                            data['result'] = 'success'
+                                            data['status'] = 101
+                                        else:
+                                            data = serializer.errors
+                                            data['status'] = 0
+                                        return Response(data)
+                                else:
+                                    serializer = BidProjectSerializer(data=request.data)
+                                    data = {}
+                                    if serializer.is_valid():
+                                        bids = serializer.save()
+                                        bids.project_name = i['route']
+                                        bids.email = email
+                                        bids.project_id = i['id']
+                                        bids.user_id = id
+                                        bids.no_of_bid = no_of_bid + 1
+                                        user_bid = Account.objects.filter(id=id).values('bid')
+                                        for e in user_bid:
+                                            j = e['bid'] - 1
+                                            user_bid.update(bid=j)
+                                        bids.save()
+                                        data['result'] = 'success'
+                                        data['status'] = 101
+
+                                    else:
+                                        data = serializer.errors
+                                        data['status'] = 0
+                                    return Response(data)
 
                             else:
-                                data = serializer.errors
-                                data['status'] = 0
-                            return Response(data)
-
+                                if kyc.kycstatus == 4:
+                                    data['message']="Your kyc have been rejected"
+                                    data['status'] = 0
+                                    return Response(data)
                     else:
-                        if kyc.kycstatus == 4:
-                            data['message']="Your kyc have been rejected"
-                            data['status'] = 0
-                            return Response(data)
-            else:
-                data['message']="kyc details not entered"
-                data['status']=0
-                return Response(data)
+                        data['message']="kyc details not entered"
+                        data['status']=0
+                        return Response(data)
 
-
-
-
-class No_Of_Bid(APIView):
+class HirerProjects(APIView):
     permission_classes = (IsAuthenticated,)
 
-    def get(self, request):
-        user = request.user
-        id = user.id
+    def get(self,request):
+        user=request.user
+        id=user.id
+        projects =PostProject.objects.filter(userid=id).values('id', 'project_title', 'description', 'min', 'max',
+                                               'username','created_at','route','project_deadline','custom_budget').order_by('created_at').reverse()
+        data={}
+        data['projects']=projects
+        data['message']='success'
+        data['status']=100
+        return Response(data)
 
-        mylist = []
-        projects_posted = PostProject.objects.filter(userid=id).values('project_title', 'route', 'id')
-        # print(projects_posted)
-        for var in projects_posted:
-
-            data={"project":var['route'],"no_of_bid":Bidproject.objects.filter(project_id=var['id']).count()}
-            mylist.append(data)
-
-
-
-        return Response(mylist)
 
 
 class Bid_Details_Project(APIView):
@@ -135,17 +138,60 @@ class Bid_Details_Project(APIView):
 
 
     def get(self, request, projectroute):
-        print(projectroute)
-        projects_posted = PostProject.objects.filter(route=projectroute).values('id', 'route', 'project_deadline','min','max')
+        user=request.user
+        id=user.id
+        print(id)
+        data = {}
+        data1={}
+        mylist=[]
+        projects_posted = PostProject.objects.filter(route=projectroute).filter(userid=id).values('id', 'route', 'project_deadline','min', 'max')
+        print(projects_posted)
+        print("=============================")
 
         for i in projects_posted:
+            norofbid = Bidproject.objects.filter(project_id=i['id']).count()
             biddeatils =Bidproject.objects.filter(project_id=i['id']).values('bid_amount','user_id','completion_time','email')
-            norofbid=Bidproject.objects.filter(project_id=i['id']).count()
-            data={}
-            data['project']=projects_posted
-            data['no_of_bid']=norofbid
-            data['bid details']=biddeatils
-            return Response(data)
+            print(biddeatils)
+            for j in biddeatils:
+                userdetails =  Userprofile.objects.filter(user_id=j['user_id']).values('user_name',  'profile',  'country_id','hourely_rate')
+                for k in userdetails:
+                    data={ "username":k['user_name'],"profile":k['profile'],"location":country.objects.filter(id=k['country_id']).values('country_name'),
+                           "email":j['email'],"bidamount":j['bid_amount'],"review":3,"hourely":k['hourely_rate'],"completiontime":j['completion_time'] ,"userid":j['user_id']}
+
+                    mylist.append(data)
+
+        data1['data']=mylist
+        data1['total']=len(mylist)
+        data1['message']="success"
+        data['status']=100
+        return Response(data1)
+
+class No_Of_Bid(APIView):
+    permission_classes = (IsAuthenticated,)
+
+    def get(self, request):
+        user = request.user
+        id = user.id
+
+
+        mylist = []
+        biddetails = Bidproject.objects.filter(user_id=id).values('bid_amount', 'user_id', 'completion_time',
+                                                                            'email', 'created_at','project_id')
+
+
+        for var in biddetails:
+            projectdetails = PostProject.objects.filter(id=var['project_id']).values('route','project_deadline','id')
+            for i in projectdetails:
+                data={
+                    "project":i['route'],
+                      "bidamount": var['bid_amount'],"bidtime":var['created_at']
+                      }
+                mylist.append(data)
+
+
+
+        return Response(mylist)
+
 
 
 

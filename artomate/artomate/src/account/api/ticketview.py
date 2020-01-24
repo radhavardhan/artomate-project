@@ -1,10 +1,10 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from account.models import TicketCat
+from account.models import TicketCat,RaiseTicket
 from account.api.serializers import  RaiseTicketSerializer
 from rest_framework.permissions import AllowAny, IsAuthenticated
 
-from django.http import HttpResponse, JsonResponse, Http404
+
 
 class TicketTypeView(APIView):
     def get(self, request):
@@ -19,10 +19,7 @@ class Raiseticket(APIView):
     def post(self, request):
         user = request.user
         id = user.id
-        # name = user.username
-        # email = user.email
-        # bid = user.bid
-        # print('name', 'id', 'bid', 'email')
+
         serializer = RaiseTicketSerializer(data=request.data)
         data = {}
         if serializer.is_valid():
