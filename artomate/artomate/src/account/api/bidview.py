@@ -173,24 +173,29 @@ class No_Of_Bid(APIView):
         user = request.user
         id = user.id
 
-
+        data1={}
         mylist = []
         biddetails = Bidproject.objects.filter(user_id=id).values('bid_amount', 'user_id', 'completion_time',
                                                                             'email', 'created_at','project_id')
 
 
         for var in biddetails:
-            projectdetails = PostProject.objects.filter(id=var['project_id']).values('route','project_deadline','id')
+            projectdetails = PostProject.objects.filter(id=var['project_id']).values('id', 'project_title', 'description', 'min', 'max',
+                                               'username','created_at','route','project_deadline','custom_budget')
             for i in projectdetails:
                 data={
-                    "project":i['route'],
-                      "bidamount": var['bid_amount'],"bidtime":var['created_at']
+                    "project":i ,
+                      "bidamount": var['bid_amount'],"bidtime":var['created_at'],
+                    "completiontime":var['completion_time']
+
                       }
                 mylist.append(data)
 
+        data1['data']=mylist
+        data1['total']=len(mylist)
 
 
-        return Response(mylist)
+        return Response(data1)
 
 
 

@@ -4,8 +4,8 @@ from django.contrib.auth.hashers import make_password
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from account.models import Userprofile,user_languages, User_Skills,Account,country,const_languages,test_languages,KycInfo
-from account.api.serializers import UserProfileSerializer,UserPortfolioProfile,User_portfolioSerializer,LanguageSerializer
+from account.models import Userprofile,user_languages, User_Skills,Account,country,const_languages,test_languages,KycInfo,PostProject
+from account.api.serializers import UserProfileSerializer,UserPortfolioProfile,User_portfolioSerializer,LanguageSerializer,PortfolioImagesSerializer
 
 class adduserprofile(APIView):
     permission_classes = (IsAuthenticated,)
@@ -94,32 +94,119 @@ class updateuserprofile(APIView):
                 if 'user_name' in request.data:
                     name = request.data['user_name']
                     name1 =name.replace(" ","")
-                    print(name)
+                    print(name1)
                     if not name:
                         data['message'] = "enter user name"
                         data['status'] = 102
                         return Response(data)
                     else:
-                        print(123455)
+                        print("test1")
                         usernameval = Account.objects.filter(username=name1).values('id')
+                        print(usernameval)
                         if usernameval.exists():
-                            print(4)
-                            data['message'] = "Username already exists"
-                            data['status'] = 102
-                            return Response(data)
-                        else:
+                            for i in usernameval:
+                                print("test2")
+                                if i['id'] == user_id:
+                                    print("test3")
+                                    print("same")
+                                    userupdate = Userprofile.objects.filter(user_id=user_id)
 
-                            print('test')
+                                    if userupdate.exists():
+                                        print("test4")
+
+                                        userprofile12 = Account.objects.get(id=user_id)
+                                        userprofile12.username=name1
+
+                                        userkyc = KycInfo.objects.get(userid=user_id)
+                                        userkyc.username = name1
+                                        userkyc.save()
+                                        userprofile11 = Userprofile.objects.get(user_id=user_id)
+                                        userprofile11.user_name = name1
+                                        userprofile12.username = name1
+                                        userprofile11.about_me = request.data['about_me']
+                                        userprofile11.hourely_rate = request.data['hourely_rate']
+                                        userprofile11.designation = request.data['designation']
+                                        userprofile11.description = request.data['description']
+                                        userprofile11.company_name = request.data['company_name']
+                                        userprofile11.phone = request.data['phone']
+                                        userprofile11.country_id = request.data['country_id']
+                                        userprofile11.save()
+                                        userprofile12.save()
+
+                                        language = request.data['language_spoken']
+                                        skill_name = request.data['userskills']
+                                        data = {}
+                                        userlang = user_languages.objects.filter(user_id=user_id)
+                                        userlang.delete()
+                                        userskills = User_Skills.objects.filter(user_id=user_id)
+                                        userskills.delete()
+                                        for j in language:
+                                            lang = user_languages.objects.create(user_id=user_id,
+                                                                                 language_name=j['language_name'],
+                                                                                 language_id=j['id'])
+                                            lang.save()
+                                        for i in skill_name:
+                                            post = User_Skills.objects.create(user_id=user_id, skill_name=i['name'],
+                                                                              skill_id=i['id'])
+                                            post.save()
+                                        data['message'] = "success"
+                                        data['status'] = 100
+                                        return Response(data)
+                                    else:
+                                        print("test5")
+
+                                        user = request.user
+                                        user_id = user.id
+                                        data = {}
+                                        language = request.data['language_spoken']
+                                        skill_name = request.data['userskills']
+                                        userprofile12 = Account.objects.get(id=user_id)
+                                        userprofile12.username = name1
+                                        userprofile12.save()
+                                        userkyc = KycInfo.objects.get(userid=user_id)
+                                        userkyc.username = name1
+                                        userkyc.save()
+                                        serializer = UserProfileSerializer(data=request.data)
+
+                                        if serializer.is_valid():
+                                            userprofile = serializer.save()
+                                            userprofile.user_id = user_id
+                                            userprofile.user_name = name1
+                                            for j in language:
+                                                lang = user_languages.objects.create(user_id=user_id,
+                                                                                     language_name=j['language_name'],
+                                                                                     language_id=j['id'])
+                                                lang.save()
+                                            for i in skill_name:
+                                                post = User_Skills.objects.create(user_id=user_id, skill_name=i['name'],
+                                                                                  skill_id=i['id'])
+                                                post.save()
+
+                                            userprofile.save()
+                                            data['result'] = 'success'
+                                            data['status'] = 101
+                                            return Response(data)
+                                        else:
+
+                                            data['status'] = 0
+                                            data = serializer.errors
+                                            return Response(data)
+                                else:
+                                    print("not same")
+                                    print("test6")
+                                    data['message'] = "Username already exists"
+                                    data['status'] = 102
+                                    return Response(data)
+                        else:
+                            print("test7")
                             userupdate = Userprofile.objects.filter(user_id=user_id)
-                            print(1)
                             if userupdate.exists():
-                                print(1243)
                                 userprofile12 = Account.objects.get(id=user_id)
+                                userprofile12.username = name1
                                 userkyc = KycInfo.objects.get(userid=user_id)
                                 userkyc.username = name1
                                 userkyc.save()
                                 userprofile11 = Userprofile.objects.get(user_id=user_id)
-
                                 userprofile11.user_name = name1
                                 userprofile12.username = name1
                                 userprofile11.about_me = request.data['about_me']
@@ -131,6 +218,7 @@ class updateuserprofile(APIView):
                                 userprofile11.country_id = request.data['country_id']
                                 userprofile11.save()
                                 userprofile12.save()
+
                                 language = request.data['language_spoken']
                                 skill_name = request.data['userskills']
                                 data = {}
@@ -151,7 +239,7 @@ class updateuserprofile(APIView):
                                 data['status'] = 100
                                 return Response(data)
                             else:
-                                print(2)
+                                print("test8")
                                 user = request.user
                                 user_id = user.id
                                 data = {}
@@ -184,19 +272,17 @@ class updateuserprofile(APIView):
                                     data['status'] = 101
                                     return Response(data)
                                 else:
-                                    print(7)
+                                    print("test9")
                                     data['status'] = 0
                                     data = serializer.errors
                                     return Response(data)
 
 
 
-
                 else:
-                    print(7)
+
                     userupdate = Userprofile.objects.filter(user_id=user_id)
                     if userupdate.exists():
-                        print(1243)
                         userprofile11 = Userprofile.objects.get(user_id=user_id)
                         userprofile11.user_name = user.username
                         userprofile11.about_me = request.data['about_me']
@@ -251,7 +337,7 @@ class updateuserprofile(APIView):
                             data['status'] = 101
                             return Response(data)
                         else:
-                            print(7)
+
                             data['status'] = 102
                             data = serializer.errors
                             return Response(data)
@@ -304,10 +390,21 @@ class addportfolio(APIView):
             user = request.user
             userid = user.id
             data = {}
-            # file=request.FILES.get['project_images']
+            mylist=[]
+
+            file=request.data['project_images']
+            print(file)
+            # for i in file:
+            #     mylist.append(i[0])
+            #     print(i)
+
+
             # print(file)
-            # print(request.data.project_images)
-            serializer = User_portfolioSerializer(data=request.data.project_images)
+
+            serializer = User_portfolioSerializer(data=request.data)
+            serializer1 = PortfolioImagesSerializer(data=request.data['project_images'], many=True)
+
+
             if serializer.is_valid():
                 portfolio = serializer.save()
                 portfolio.user_id = userid

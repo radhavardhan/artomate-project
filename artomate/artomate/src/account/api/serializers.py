@@ -23,7 +23,7 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 from account.models import Account,KycInfo,Categories,PostProject,Userprofile,SubCategory,Skills,\
     Bidproject,No_of_bids_for_project,Const_skills,Hirer_bid_select,BlackListedToken,User_Skills,\
-    UserPortfolioProfile,const_languages,test_languages,RaiseTicket
+    UserPortfolioProfile,const_languages,test_languages,RaiseTicket,PortfolioImages
 from mysite import settings
 
 
@@ -102,10 +102,31 @@ class User_portfolioSerializer(serializers.ModelSerializer):
         def save(self):
             userportfolio = UserPortfolioProfile(
                 project_name =  self.validated_data['project_name'],
-                project_images = self.validated_data['project_images'],
+
                 project_description = self.validated_data['project_description'],
             )
             return userportfolio
+
+        # project_images = serializers.ListField(child=serializers.ImageField(required=True))
+        #
+        # def create(self, validated_data):
+        #
+        #     for attr, value in validated_data.items():
+        #         if attr == 'image':
+        #             for x in value:
+        #                 c = PortfolioImages.objects.create(image=x, user_id=PortfolioImages.objects.get(
+        #                     id=self.context['request'].user.id).id)
+        #                 c.save()
+        #     return validated_data
+
+class PortfolioImagesSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = PortfolioImages
+
+    def create(self, validated_data):
+        imgs = PortfolioImages.objects.create(**validated_data)
+        return imgs
 
 
 class LanguageSerializer(serializers.ModelSerializer):

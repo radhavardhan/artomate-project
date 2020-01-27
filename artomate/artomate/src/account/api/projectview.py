@@ -12,7 +12,7 @@ from rest_framework.pagination import (
     PageNumberPagination,LimitOffsetPagination)
 
 from account.api.pagination import PostLimitOffsetPagination,PostPageNumberPagination
-from account.models import PostProject, Skills, Bidproject, Const_skills, Experiance, country, Currency, KycInfo
+from account.models import PostProject, Skills, Bidproject, Const_skills, Experiance, country, Currency, KycInfo,Categories
 from account.api.serializers import PostProjectSerializer
 from django.http import HttpResponse, JsonResponse, Http404
 
@@ -112,6 +112,10 @@ class Projects(APIView):
             user = request.user
             project = string1.replace(" ", "-")
             string2 = '-' + ''.join(choice(digits) for i in range(8))
+
+
+
+
             project_title1 = project + string2
             postproject1 = PostProject.objects.all()
             serializer = PostProjectSerializer(data=request.data)
@@ -140,7 +144,7 @@ class Projects(APIView):
                                         cat1=json.dumps(cat)
                                         pro.category_id = cat1
                                         pro.project_code = code
-                                        pro.username = user.username
+                                        pro.username =kyc.fullname
                                         pro.route = project_title12
                                         pro.save()
                                         project_id = pro.id
@@ -166,7 +170,7 @@ class Projects(APIView):
                                 pro.category_id = cat1
 
                                 pro.project_code = code
-                                pro.username = user.username
+                                pro.username = kyc.fullname
                                 pro.route = project_title2
                                 pro.save()
                                 project_id = pro.id
@@ -192,7 +196,7 @@ class Projects(APIView):
                                 pro.category_id = cat1
 
                                 pro.project_code = code
-                                pro.username = user.username
+                                pro.username =kyc.fullname
                                 pro.route = project_title2
                                 pro.save()
 
@@ -222,3 +226,40 @@ def test():
     return JsonResponse(testmessage , safe=False)
 
 
+class ProjectOnCategory(APIView):
+    def get(self, request, category_code):
+
+        category = category_code
+        mylist = []
+        data1 = {}
+        category = Categories.objects.filter(category_code=category).values('id')
+        data = {}
+        if not category:
+            data['message'] = "not found"
+            data['status'] = 102
+            return Response(data)
+        else:
+
+            for i in category:
+                project = PostProject.objects.filter(category_id=i['id']).values('id', 'project_title', 'route',
+                                                                                 'project_code', 'username',
+                                                                                 'budgetType_Id', 'currency_id', 'min',
+                                                                                 'max', 'custom_budget',
+                                                                                 'project_deadline')
+                if project.exists():
+                    for j in project:
+                        project_skill = Skills.objects.filter(project_id=j['id']).values('skill_name')
+                        bid = Bidproject.objects.filter(project_id=j['id']).values('no_of_bid').count()
+                        bids = bid
+                        data = {"projects": j, "skills": project_skill, "bids": bids}
+
+                        mylist.append(data)
+                    total = len(mylist)
+                    data1['data'] = mylist
+                    data1['totalcount'] = total
+                    return Response(data1)
+                else:
+                    data = {}
+                    data['message'] = "not found"
+                    data['status'] = 102
+                    return Response(data)

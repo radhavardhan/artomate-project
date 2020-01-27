@@ -46,7 +46,7 @@ class AllCategories(APIView):
         allcategories = Categories.objects.all().values('id','category_name','category_image')
         for i in allcategories:
             projects = PostProject.objects.filter(category_id=i['id']).count()
-            data = {"categpries": i, "no of posted jobs": projects}
+            data = {"categories": i, "no of posted jobs": projects}
             mylist.append(data)
         data1['data'] = mylist
         data1['total']=len(mylist)
@@ -96,3 +96,33 @@ class CategoryList(APIView):
             data['result'] = mylist
 
             return Response(data)
+
+class JobsOnCategory(APIView):
+
+    def get(self,request):
+        mylist = []
+        data1 = {}
+        allcategories = Categories.objects.all().values('id', 'category_name', 'category_image')
+        # print(allcategories)
+        # projects = PostProject.objects.latest('created_at')
+        projects = PostProject.objects.values('category_id','id').distinct()
+        # projects23 = PostProject.objects.values('category_id','id','created_at').filter('category_id').latest('created_at')
+        # print(projects)
+        # cat_id = [1,2,3,4,5,6]
+        # for i in cat_id:
+        #
+        #     projects12 = PostProject.objects.filter(category_id=i).reverse()
+        #     mylist.append(projects12)
+        #     print(mylist)
+        # for i in allcategories:
+        #     projects = PostProject.objects.filter(category_id=i['id']).count()
+        #     data = {"categories": i, "no of posted jobs": projects}
+        #     mylist.append(data)
+        # data1['data'] = mylist
+        # data1['total'] = len(mylist)
+
+        data1['pr']=projects
+
+
+        return Response(data1)
+

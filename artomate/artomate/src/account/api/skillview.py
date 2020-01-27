@@ -99,7 +99,7 @@ class UserOnSkill(APIView):
 
                     for j in value1:
                         results = Userprofile.objects.filter(user_id=j['user_id']).values('user_name', 'designation',
-                                                                                          'hourely_rate', 'description',
+                                                                                          'hourely_rate',
                                                                                           'profile', 'user_id',
                                                                                           'country_id')
 

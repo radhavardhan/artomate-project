@@ -25,7 +25,7 @@ class FreelancerView(APIView):
         data = {}
         data1={}
         mylist=[]
-        userprof = Userprofile.objects.filter(user_name=username).values('user_name', 'designation', 'hourely_rate','description','profile','user_id','country_id')
+        userprof = Userprofile.objects.filter(user_name=username).values('user_name', 'designation', 'hourely_rate' ,'profile','user_id','country_id')
         if userprof.exists():
             for i in user:
 
@@ -58,7 +58,7 @@ class FilterFreelancerList(APIView):
     def post(self, request):
         data1 = {}
         data = {}
-        if 'search' in request.data:
+        if 'name' in request.data:
             search_name = request.data['name']
             name = search_name[:3]
             print(name)
@@ -72,7 +72,7 @@ class FilterFreelancerList(APIView):
                     id = i['userid']
 
                     user = Userprofile.objects.filter(user_id=id).values('user_name', 'designation', 'hourely_rate',
-                                                                         'description',
+
                                                                          'profile', 'user_id', 'country_id')
 
                     for j in user:
@@ -102,7 +102,7 @@ class FilterFreelancerList(APIView):
 
 class FreelancerList(APIView):
         def get(self, request):
-            user = Userprofile.objects.all().values('user_name', 'designation', 'hourely_rate', 'description',
+            user = Userprofile.objects.all().values('user_name', 'designation', 'hourely_rate',
                                                     'profile', 'user_id','country_id')
             if user.exists():
                 mylist = []

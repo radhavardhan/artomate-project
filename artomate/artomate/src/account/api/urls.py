@@ -44,6 +44,7 @@ urlpatterns = [
     path('projectlist',projectview.AllProjects.as_view()),
     path('singlejob/<str:projectroute>',projectview.SingleJob.as_view()),
     path('testfunction', projectview.Proj.as_view()),
+    path('project_on_category/<str:category_code>', projectview.ProjectOnCategory.as_view()),
 
 
 
@@ -58,11 +59,13 @@ urlpatterns = [
     path('freelancer_on_skills/<str:skill_code>', skillview.UserOnSkill.as_view()),
 
 
+
         # Category and subcategory view
     path('category', categoryview.Category.as_view()),
     path('subcategory', categoryview.SubCategory1.as_view()),
     path('allcategories', categoryview.AllCategories.as_view()),
     path('categorylist/<int:cat_id>', categoryview.CategoryList.as_view()),
+    path('jobsoncategory',categoryview.JobsOnCategory.as_view()),
 
 
                 #ticket
@@ -87,6 +90,7 @@ urlpatterns = [
 
     path('filterfreelanceroncountry/<int:country_id>',freelancerview.FilterFreelancerOnCountry.as_view()),
     path('filterfreelanceronlang/<int:lang_id>',freelancerview.FreelancerOnLanguage.as_view()),
+
 
             #searchfilter
     path('searchfilter',freelancerview.SearchFilter.as_view()),
