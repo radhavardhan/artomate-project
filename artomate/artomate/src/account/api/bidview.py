@@ -126,7 +126,9 @@ class HirerProjects(APIView):
                                                'username','created_at','route','project_deadline','custom_budget').order_by('created_at').reverse()
         data={}
         data['projects']=projects
+        data['total']=len(projects)
         data['message']='success'
+
         data['status']=100
         return Response(data)
 
@@ -145,26 +147,31 @@ class Bid_Details_Project(APIView):
         data1={}
         mylist=[]
         projects_posted = PostProject.objects.filter(route=projectroute).filter(userid=id).values('id', 'route', 'project_deadline','min', 'max')
-        print(projects_posted)
-        print("=============================")
+        if projects_posted.exists():
+            print(projects_posted)
+            print("=============================")
 
-        for i in projects_posted:
-            norofbid = Bidproject.objects.filter(project_id=i['id']).count()
-            biddeatils =Bidproject.objects.filter(project_id=i['id']).values('bid_amount','user_id','completion_time','email')
-            print(biddeatils)
-            for j in biddeatils:
-                userdetails =  Userprofile.objects.filter(user_id=j['user_id']).values('user_name',  'profile',  'country_id','hourely_rate')
-                for k in userdetails:
-                    data={ "username":k['user_name'],"profile":k['profile'],"location":country.objects.filter(id=k['country_id']).values('country_name'),
-                           "email":j['email'],"bidamount":j['bid_amount'],"review":3,"hourely":k['hourely_rate'],"completiontime":j['completion_time'] ,"userid":j['user_id']}
+            for i in projects_posted:
+                norofbid = Bidproject.objects.filter(project_id=i['id']).count()
+                biddeatils =Bidproject.objects.filter(project_id=i['id']).values('bid_amount','user_id','completion_time','email')
+                print(biddeatils)
+                for j in biddeatils:
+                    userdetails =  Userprofile.objects.filter(user_id=j['user_id']).values('user_name',  'profile',  'country_id','hourely_rate')
+                    for k in userdetails:
+                        data={ "username":k['user_name'],"profile":k['profile'],"location":country.objects.filter(id=k['country_id']).values('country_name'),
+                               "email":j['email'],"bidamount":j['bid_amount'],"review":3,"hourely":k['hourely_rate'],"completiontime":j['completion_time'] ,"userid":j['user_id']}
 
-                    mylist.append(data)
+                        mylist.append(data)
 
-        data1['data']=mylist
-        data1['total']=len(mylist)
-        data1['message']="success"
-        data['status']=100
-        return Response(data1)
+            data1['data']=mylist
+            data1['total']=len(mylist)
+            data1['message']="success"
+            data1['status']=100
+            return Response(data1)
+        else:
+            data1['message'] = "Not found"
+            data1['status'] = 102
+            return Response(data1)
 
 class No_Of_Bid(APIView):
     permission_classes = (IsAuthenticated,)
@@ -203,42 +210,29 @@ class No_Of_Bid(APIView):
 class Select_Bid(APIView):
     permission_classes = (IsAuthenticated,)
 
-    def post(self,request):
-        if request.method=='POST':
+    def get(self,request,projectid,userid):
+        if request.method=='GET':
+            user =request.user
+            useremail=user.email
+
             data = {}
-            if 'project_id' in request.data:
-                projectid=request.data['project_id']
-                if not projectid:
-                    data['message'] = "enter an project_id"
-                    data['status'] = 102
-                    return Response(data)
-                else:
-                    projectcheck = Hirer_bid_select.objects.filter(project_id=projectid)
-                    if projectcheck.exists():
-                        data['message'] = 'Allready freelancer selected for project'
-                        data['status'] = 102
-                    else:
-                        # freelancer_email = request.data['freelancer_email_id']
-                        # biddetails=Bidproject.objects.filter(email=freelancer_email)
-                        # if biddetails.exists():
-                        projectroute = PostProject.objects.get(id=projectid)
-                        print(projectroute)
-                        serializer=HirerSelectBidSerializer(data=request.data)
-                        if serializer.is_valid():
-                            print(123)
-                            selectedbid=serializer.save()
-                            selectedbid.project_route = projectroute.route
-                            selectedbid.hirer_email_id = request.user.email
-                            selectedbid.save()
-                            data['message'] = "success"
-                            data['status'] = 100
-                        else:
-                            data['error'] = serializer.errors
-                            data['status'] = 0
-                    return Response(data)
-            else:
-                data['message'] = "project_id required"
-                data['status'] = 102
-                return Response(data)
+            projectroute = PostProject.objects.filter(id=projectid).values()
+
+            userdetails = Userprofile.objects.filter(id=userid).values('user_name', 'designation', 'hourely_rate',
+                                                    'profile', 'user_id', 'country_id')
+            account = Account.objects.filter(id=userid).values()
+            print(projectroute)
+            for i in projectroute:
+                for j in account:
+                    details = Hirer_bid_select.objects.create( hirer_email_id=useremail,project_id=i['id'],project_route=i['route'],freelancer_email_id=j['email'])
+                    details.save()
+
+            projectroute = PostProject.objects.get(id=projectid)
+            projectroute.project_status = 1
+            projectroute.save()
+            data['message'] = "success"
+            data['status'] = 100
+            return Response(data)
+
 
 

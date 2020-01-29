@@ -107,9 +107,10 @@ class FreelancerList(APIView):
             if user.exists():
                 mylist = []
                 for i in user:
+                    fullname = KycInfo.objects.filter(userid=i['user_id']).values('fullname')
 
                     data = {
-                        "fullname":KycInfo.objects.filter(userid=i['user_id']).values('fullname'),
+                        "fullname":fullname,
                         "freelancer": i,
                         "location": country.objects.filter(id=i['country_id']).values('country_name'),
                         "ratings": 4,

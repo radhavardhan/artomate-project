@@ -168,8 +168,10 @@ class PostProject(models.Model):
     project_deadline = models.DateField()
     experience_required = models.CharField(max_length=100)
     country_id = models.CharField(max_length=100)
+    project_status=models.IntegerField(default=None)
     created_at = models.DateTimeField(verbose_name='created_at', auto_now_add=True)
     update_at = models.DateTimeField(verbose_name='updates_at', auto_now=True)
+
 
 
 class Userprofile(models.Model):
@@ -199,12 +201,9 @@ class UserPortfolioProfile(models.Model):
 
 class PortfolioImages(models.Model):
     image = models.ImageField(upload_to='')
-    user = models.ForeignKey('UserPortfolioProfile', related_name='user',on_delete=True)
+    userid = models.IntegerField(default=None)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-
-    def __str__(self):
-        return str(self.user)
 
 
 class const_languages(models.Model):

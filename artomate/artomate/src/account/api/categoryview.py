@@ -12,7 +12,7 @@ import string
 from random import choice
 from string import ascii_lowercase, digits, hexdigits
 from rest_framework.views import APIView
-from account.models import Categories,SubCategory,Const_skills,PostProject
+from account.models import Categories,SubCategory,Const_skills,PostProject,Bidproject,country
 from account.api.serializers import  CategoriesSerializer,SubCategorySerializer
 
 
@@ -99,30 +99,26 @@ class CategoryList(APIView):
 
 class JobsOnCategory(APIView):
 
-    def get(self,request):
+    def get(self, request):
         mylist = []
+        mylist2 = []
+
         data1 = {}
         allcategories = Categories.objects.all().values('id', 'category_name', 'category_image')
-        # print(allcategories)
-        # projects = PostProject.objects.latest('created_at')
-        projects = PostProject.objects.values('category_id','id').distinct()
-        # projects23 = PostProject.objects.values('category_id','id','created_at').filter('category_id').latest('created_at')
-        # print(projects)
-        # cat_id = [1,2,3,4,5,6]
-        # for i in cat_id:
-        #
-        #     projects12 = PostProject.objects.filter(category_id=i).reverse()
-        #     mylist.append(projects12)
-        #     print(mylist)
-        # for i in allcategories:
-        #     projects = PostProject.objects.filter(category_id=i['id']).count()
-        #     data = {"categories": i, "no of posted jobs": projects}
-        #     mylist.append(data)
-        # data1['data'] = mylist
-        # data1['total'] = len(mylist)
 
-        data1['pr']=projects
+        for i in allcategories:
+            jobs = PostProject.objects.filter(category_id=i['id']).values('category_id', 'id', 'route', 'created_at','min','max','custom_budget','description','project_title','country_id').order_by(
+                '-category_id').order_by('-created_at').first()
 
-
+            mylist.append(jobs)
+        final_list = list(filter(None, mylist))
+        for i in final_list:
+            countryname = country.objects.filter(id=i['country_id']).values('country_name')
+            data = { "projects": i,"location":countryname}
+            mylist2.append(data)
+            data1['data'] = mylist2
+            data1['total'] = len(final_list)
+            data1['message'] ="success"
+            data1['status']=100
         return Response(data1)
 

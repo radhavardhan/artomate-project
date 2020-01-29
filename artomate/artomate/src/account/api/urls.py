@@ -124,7 +124,7 @@ urlpatterns = [
     path('usersbiddeatilsproject',bidview.No_Of_Bid.as_view()),
 
 
-    path('selectbid',bidview.Select_Bid.as_view()),
+    path('selectbid/<int:projectid>/<int:userid>',bidview.Select_Bid.as_view()),
 
     path('testjson', views.TestJson.as_view()),
 

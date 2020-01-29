@@ -37,8 +37,8 @@ class AllProjects(APIView):
     pagination_class = PageNumberPagination
 
     def get(self, request):
-        queryset = PostProject.objects.values('id', 'project_title', 'description', 'min', 'max',
-                                               'username','created_at','route').order_by('created_at').reverse()
+        queryset = PostProject.objects.filter(project_status=0).values('id', 'project_title', 'description', 'min', 'max',
+                                               'username','created_at','route','custom_budget','country_id').order_by('created_at').reverse()
         data = {}
         data1={}
         if queryset.exists():
@@ -47,14 +47,12 @@ class AllProjects(APIView):
             for i in queryset:
                 project_skill = Skills.objects.filter(project_id=i['id']).values('skill_name')
                 bid = Bidproject.objects.filter(project_id=i['id']).values('no_of_bid').count()
-
-
-
-                data= {"projects":i, "skills": project_skill, "bids": bid}
+                countryname = country.objects.filter(id=i['country_id']).values('country_name')
+                data= {"projects":i,"location":countryname,"skills": project_skill, "bids": bid}
 
                 mylist.append(data)
             total=len(mylist)
-            data1['all projects']=mylist
+            data1['data']=mylist
             data1['total']=total
             return Response(data1)
         else:
@@ -112,10 +110,6 @@ class Projects(APIView):
             user = request.user
             project = string1.replace(" ", "-")
             string2 = '-' + ''.join(choice(digits) for i in range(8))
-
-
-
-
             project_title1 = project + string2
             postproject1 = PostProject.objects.all()
             serializer = PostProjectSerializer(data=request.data)
@@ -146,6 +140,7 @@ class Projects(APIView):
                                         pro.project_code = code
                                         pro.username =kyc.fullname
                                         pro.route = project_title12
+                                        pro.project_status=0
                                         pro.save()
                                         project_id = pro.id
                                         skillname = request.data['skills']
@@ -172,6 +167,7 @@ class Projects(APIView):
                                 pro.project_code = code
                                 pro.username = kyc.fullname
                                 pro.route = project_title2
+                                pro.project_status = 0
                                 pro.save()
                                 project_id = pro.id
                                 skillname = request.data['skills']
@@ -198,6 +194,7 @@ class Projects(APIView):
                                 pro.project_code = code
                                 pro.username =kyc.fullname
                                 pro.route = project_title2
+                                pro.project_status = 0
                                 pro.save()
 
                                 project_id = pro.id

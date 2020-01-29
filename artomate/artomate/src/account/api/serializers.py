@@ -107,26 +107,8 @@ class User_portfolioSerializer(serializers.ModelSerializer):
             )
             return userportfolio
 
-        # project_images = serializers.ListField(child=serializers.ImageField(required=True))
-        #
-        # def create(self, validated_data):
-        #
-        #     for attr, value in validated_data.items():
-        #         if attr == 'image':
-        #             for x in value:
-        #                 c = PortfolioImages.objects.create(image=x, user_id=PortfolioImages.objects.get(
-        #                     id=self.context['request'].user.id).id)
-        #                 c.save()
-        #     return validated_data
 
-class PortfolioImagesSerializer(serializers.ModelSerializer):
 
-    class Meta:
-        model = PortfolioImages
-
-    def create(self, validated_data):
-        imgs = PortfolioImages.objects.create(**validated_data)
-        return imgs
 
 
 class LanguageSerializer(serializers.ModelSerializer):
@@ -268,11 +250,14 @@ USER_LIFETIME = datetime.timedelta(days=30)
 
 class MyTokenObtainSerializer(TokenObtainPairSerializer):
     def validate(self, attrs):
+
         username = attrs['email']
         password = attrs['password']
         user = authenticate(username=username, password=password)
-
-
+        activecheck = Account.objects.filter(email=username).filter(is_active=0)
+        if activecheck.exists():
+            custom = {"error": "Please verify email", "status": "0"}
+            return custom
 
         if not user:
             custom={"error":"Invalid Credentials","status":"0"}

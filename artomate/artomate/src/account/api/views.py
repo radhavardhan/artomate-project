@@ -63,7 +63,7 @@ def registration_view(request):
     if user == 'yes':
         size = 5
 
-        string2 = 'user' +''.join(choice(digits) for i in range(5))
+        string2 = '' + ''.join(choice(digits) for i in range(7))
 
         randomstring =  string2
         serializer = RegistrationSerializer(data=request.data)

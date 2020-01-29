@@ -4,8 +4,8 @@ from django.contrib.auth.hashers import make_password
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from account.models import Userprofile,user_languages, User_Skills,Account,country,const_languages,test_languages,KycInfo,PostProject
-from account.api.serializers import UserProfileSerializer,UserPortfolioProfile,User_portfolioSerializer,LanguageSerializer,PortfolioImagesSerializer
+from account.models import Userprofile,user_languages, User_Skills,Account,country,const_languages,test_languages,KycInfo,PostProject,PortfolioImages
+from account.api.serializers import UserProfileSerializer,UserPortfolioProfile,User_portfolioSerializer,LanguageSerializer
 
 class adduserprofile(APIView):
     permission_classes = (IsAuthenticated,)
@@ -390,31 +390,29 @@ class addportfolio(APIView):
             user = request.user
             userid = user.id
             data = {}
-            mylist=[]
 
-            file=request.data['project_images']
-            print(file)
-            # for i in file:
-            #     mylist.append(i[0])
-            #     print(i)
-
-
-            # print(file)
-
-            serializer = User_portfolioSerializer(data=request.data)
-            serializer1 = PortfolioImagesSerializer(data=request.data['project_images'], many=True)
-
-
-            if serializer.is_valid():
-                portfolio = serializer.save()
-                portfolio.user_id = userid
-                portfolio.save()
-                data['message'] = "success"
-                data['status'] = 100
+            imagefiles=request.FILES.getlist('project_images')
+            imagelimit =len(imagefiles)
+            print(imagelimit)
+            if imagelimit>5:
+                data['message'] = "Cant upload more than 5 images"
+                data['status'] = 102
+                return Response(data)
             else:
-                data['status'] = 0
-                data = serializer.errors
-            return Response(data)
+                serializer = User_portfolioSerializer(data=request.data)
+                if serializer.is_valid():
+                    portfolio = serializer.save()
+                    portfolio.user_id = userid
+                    portfolio.save()
+                    for i in imagefiles:
+                        images=PortfolioImages.objects.create(image=i, userid=userid)
+                        images.save()
+                    data['message'] = "success"
+                    data['status'] = 100
+                else:
+                    data['status'] = 0
+                    data = serializer.errors
+                return Response(data)
 
 
 class getportfolio(APIView, ):
