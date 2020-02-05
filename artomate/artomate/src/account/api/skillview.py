@@ -176,3 +176,34 @@ class TestFunctions(APIView):
     def get(self, request):
         foo = projectview.test()
         return JsonResponse(foo, safe=False)
+
+
+class testlinkskill(APIView):
+    def get(self, request,skill=None):
+        mylist=[]
+        mylist2=[]
+        res = []
+        skill_code=request.GET.get('skill')
+        # print(skill_code)
+        # print(skill_code.split('_'))
+        skillseparate =skill_code.split('_')
+        # print(skillseparate)
+        for i in skillseparate:
+            project_id = Skills.objects.filter(skill_name=i).values('project_id')
+            # print(project_id)
+            mylist2.append(project_id)
+            for items in mylist2:
+                for var in items:
+                    if var not in res:
+                        res.append(var)
+            for j in res:
+                projectslist = PostProject.objects.filter(id=j['project_id']).values()
+
+                mylist.append(projectslist)
+
+
+        list
+        list=len(mylist)-1
+
+
+        return Response(mylist)

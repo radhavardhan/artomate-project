@@ -1,12 +1,14 @@
 import uuid as uuid
-from django.core.validators import RegexValidator
+from django.core.validators import RegexValidator, FileExtensionValidator
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
 # from django.utils import simplejson as json
 # from django_mysql.models import JSONField, Model
 import jsonfield
 from djongo.models import json
-from django_mysql.models import JSONField, Model
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+
 from django.core.validators import MinValueValidator, MaxValueValidator
 
 
@@ -179,7 +181,7 @@ class Userprofile(models.Model):
     user_name = models.CharField(max_length=300, default=None)
     phone = models.BigIntegerField(default=None)
     designation = models.TextField()
-    profile = models.ImageField(upload_to='', default="yonghyun-lee-RhGK4qOwxxw-unsplash.jpg")
+    profile = models.ImageField(upload_to='', default="yonghyun-lee-RhGK4qOwxxw-unsplash.jpg",validators=[FileExtensionValidator(['jpeg','png','gif'])])
     portfolio = models.FileField(upload_to='', default=None)
     country_id = models.IntegerField()
     company_name = models.CharField(max_length=300)
@@ -247,6 +249,7 @@ class Bidproject(models.Model):
     no_of_bid = models.IntegerField(default=None, null=True)
     completion_time = models.IntegerField(default=None)
     descreption = models.TextField()
+    bid_status = models.CharField(max_length=30,default=None)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -314,3 +317,20 @@ class RaiseTicket(models.Model):
 
 class TicketCat(models.Model):
     name = models.CharField(max_length=150)
+
+
+class Notification(models.Model):
+    title = models.CharField(max_length=150)
+    message = models.CharField(max_length=150)
+    viewed = models.BooleanField(default=False)
+    accountuser = models.ForeignKey(Account ,on_delete=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+@receiver(post_save, sender=Account)
+def create_welcom_message(sender,**kwargs):
+    if kwargs.get('created',False):
+        Notification.objects.create(accountuser=kwargs.get('instance'),title="welcome artomate",message="thank u")
+
+
+

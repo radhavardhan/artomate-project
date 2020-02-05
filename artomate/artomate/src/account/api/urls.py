@@ -20,7 +20,7 @@ urlpatterns = [
     path('jwt_test',views.MyTokenObtain.as_view()),
     path('jwt_test/refresh',TokenRefreshView.as_view()),
 
-
+    path('index',views.TestIndex.as_view()),
     path('register', registration_view, name="register"),
     path('login', login),
     path('logout',views.Logout.as_view()),
@@ -29,6 +29,8 @@ urlpatterns = [
             #OTP
     path('sendotp',views.ValidatePhoneSendOTP.as_view()),
     path('twiliosendotp', send_otp.TWILIOSendOTP.as_view()),
+    path('pwd',send_otp.Encrypt.as_view()),
+    path('pwd12/<str:txt>',send_otp.Decreypt.as_view()),
     # path('otp',send_otp.SendOtp.as_view()),
 
             # Kyc View
@@ -78,6 +80,7 @@ urlpatterns = [
 
         #budget
     path('budget/<int:budget_id>/<int:currency_id>',views.BudgetsDetails.as_view()),
+    path('budgetid/<int:budget_id>',views.BudgetIDDetails.as_view()),
 
     path('uservalidate', views.UsernameValidation.as_view()),
     path('uservalidation12', views.UsernameValidation123.as_view()),
@@ -90,6 +93,7 @@ urlpatterns = [
 
     path('filterfreelanceroncountry/<int:country_id>',freelancerview.FilterFreelancerOnCountry.as_view()),
     path('filterfreelanceronlang/<int:lang_id>',freelancerview.FreelancerOnLanguage.as_view()),
+    path('recentcreatedfreelancers',freelancerview.RecentlyCreatedUser.as_view()),
 
 
             #searchfilter
@@ -124,7 +128,7 @@ urlpatterns = [
     path('usersbiddeatilsproject',bidview.No_Of_Bid.as_view()),
 
 
-    path('selectbid/<int:projectid>/<int:userid>',bidview.Select_Bid.as_view()),
+    path('selectbid',bidview.Select_Bid.as_view()),
 
     path('testjson', views.TestJson.as_view()),
 
@@ -132,6 +136,7 @@ urlpatterns = [
 
     # Ticket
     # path('raiseticket',)
+    path('testlinkskill/', skillview.testlinkskill.as_view()),
 
 
 ]

@@ -1,11 +1,12 @@
-from django.contrib.auth.hashers import make_password
-
+from django.contrib.auth.hashers import make_password, Argon2PasswordHasher
 
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from account.models import Userprofile,user_languages, User_Skills,Account,country,const_languages,test_languages,KycInfo,PostProject,PortfolioImages
 from account.api.serializers import UserProfileSerializer,UserPortfolioProfile,User_portfolioSerializer,LanguageSerializer
+from rest_framework.pagination import (
+    PageNumberPagination,LimitOffsetPagination)
 
 class adduserprofile(APIView):
     permission_classes = (IsAuthenticated,)
@@ -358,19 +359,32 @@ class updateprofilepic(APIView):
         if kyc.exists():
             if 'profile' in request.data:
                 photo = request.data['profile']
-
-                print(photo)
                 if not photo:
                     data['error'] = "select an image"
-                    data['status']=102
+                    data['status'] = 102
                     return Response(data)
                 else:
-                    userprofilepic = Userprofile.objects.get(user_id=user_id)
-                    userprofilepic.profile = request.data['profile']
-                    userprofilepic.save()
-                    data['message'] = "success"
-                    data['status'] = 100
-                    return Response(data)
+                    print(1234567)
+                    photo12 =str(photo)
+                    imagetest=photo12.split('.')[-1]
+                    print(imagetest)
+                    imageext = ['pdf','zip','html','docs']
+                    if imagetest  in   imageext:
+                        data['message'] = "its not a image type"
+                        data['status'] = 102
+                        return Response(data)
+
+                    else:
+                        userprofilepic = Userprofile.objects.get(user_id=user_id)
+                        userprofilepic.profile = photo
+                        userprofilepic.save()
+                        data['message'] = "success"
+                        data['status'] = 100
+                        return Response(data)
+
+
+
+
             else:
                 data['error'] = "profile required"
                 data['status'] = 102
@@ -452,12 +466,52 @@ class ProfileVeiw(APIView):
 
         return Response(data)
 
+
+
 class ChangePassword(APIView):
     permission_classes = (IsAuthenticated,)
 
-    def post(self,request):
+    def _decode(self, encoded):
+        """
+        Split an encoded hash and return: (
+            algorithm, variety, version, time_cost, memory_cost,
+            parallelism, salt, data,
+        ).
+        """
+        bits = encoded.split('$')
+        print(bits)
+        if len(bits) == 5:
+            # Argon2 < 1.3
+            algorithm, variety, raw_params, salt, data = bits
+            version = 0x10
+
+        else:
+            print("hi")
+            assert len(bits) == 6
+            algorithm, variety, raw_version, raw_params, salt, data = bits
+            assert raw_version.startswith('v=')
+            version = int(raw_version[len('v='):])
+        params = dict(bit.split('=', 1) for bit in raw_params.split(','))
+        assert len(params) == 3 and all(x in params for x in ('t', 'm', 'p'))
+        time_cost = int(params['t'])
+        memory_cost = int(params['m'])
+        parallelism = int(params['p'])
+        return (
+            algorithm, variety, version, time_cost, memory_cost, parallelism,
+            salt, data,
+        )
+
+    def post(self, request):
         user=request.user
         oldpwd = user.password
+        print(oldpwd)
+        oldpasswd = request.data['oldpassword']
+        print(oldpasswd)
+
+        class123 =Argon2PasswordHasher
+        print("2354354")
+        # old12 = self._decode(oldpwd)
+        # print(old12)
         pwd1=  request.data['password']
         newpwd=make_password(request.data['password'])
         confirmpwd=request.data['confirmpwd']

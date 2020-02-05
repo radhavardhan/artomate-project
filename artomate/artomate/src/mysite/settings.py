@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'personal',
     'account',
     'blog',
+    'notification',
 
 
     # django apps
@@ -65,14 +66,15 @@ REST_FRAMEWORK = {
         # 'rest_framework.authentication.TokenAuthentication',
 
    ),
-    # 'DEFAULT_PAGINATION_CLASS':  'rest_framework.pagination.PageNumberPagination',
-    #     'PAGE_SIZE': 1
+    'DEFAULT_PAGINATION_CLASS':  'rest_framework.pagination.PageNumberPagination',
 
 }
 
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': datetime.timedelta(days=30),
 }
+
+ENCRYPT_KEY = b'iDJpljxUBBsacCZ50GpSBff6Xem0R-giqXXnBFGJ2Rs='
 
 #
 # JWT_AUTH = {    'JWT_VERIFY': True,    'JWT_VERIFY_EXPIRATION': True,    'JWT_EXPIRATION_DELTA': datetime.timedelta(seconds=3000),    'JWT_AUTH_HEADER_PREFIX': 'Bearer',}

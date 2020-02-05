@@ -1,11 +1,4 @@
-from django.db.models import Q
-from rest_framework.pagination import LimitOffsetPagination, PageNumberPagination
-from rest_framework.permissions import AllowAny, IsAuthenticated
-import random
-import string
-from random import choice
-from string import ascii_lowercase, digits, hexdigits
-import json
+
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.pagination import (
@@ -15,8 +8,8 @@ from account.api.pagination import PostLimitOffsetPagination,PostPageNumberPagin
 from account.models import Account, Userprofile, User_Skills, user_languages, UserPortfolioProfile, country, Currency, KycInfo,Const_skills,const_languages,Skills,PostProject,\
                             Bidproject
 
-from account.api.serializers import PostProjectSerializer
-from django.http import HttpResponse, JsonResponse, Http404
+from django.core.paginator import Paginator
+from account.api.pagination import PostLimitOffsetPagination,PostPageNumberPagination
 
 
 class FreelancerView(APIView):
@@ -414,3 +407,37 @@ class SearchJobOnExperience(APIView):
             data['message'] = "Not Found"
             data['status'] = 102
             return Response(data)
+
+class ProjectViewPagination(PageNumberPagination):
+    page_size = 2
+
+class RecentlyCreatedUser(APIView):
+
+
+    def get(self, request):
+
+        mylist2 = []
+
+        data1 = {}
+        results = Userprofile.objects.all().values('user_name', 'designation', 'hourely_rate',
+                                                                          'profile', 'user_id',
+                                                                          'country_id','created_at').order_by('created_at').reverse()
+
+
+        if results.exists():
+
+            for i in results:
+                fullname = KycInfo.objects.filter(userid=i['user_id']).values('fullname')
+                countryname = country.objects.filter(id=i['country_id']).values('country_name')
+                data = { "freelancer": i,"fullname":fullname,"location":countryname}
+                mylist2.append(data)
+            finali =mylist2[:4]
+            data1['data'] = finali
+            data1['total'] = len(finali)
+            data1['message'] ="success"
+            data1['status']=100
+            return Response(data1)
+        else:
+            data1['message'] = "success"
+            data1['status'] = 100
+            return Response(data1)

@@ -1,0 +1,23 @@
+<html>
+<head>
+    <title>WEB SOCKET TEST</title>
+</head>
+    <body>
+        <script>
+          var sock =new WebSocket("wss://echo.websocket.org");
+          sock.onopen = function(event)
+          {
+
+          alert("websocket connected succefully");
+          setTimeout(function(){
+          sock.send("hi aws");
+          },1000)
+
+          };
+          sock.onmessages = function(event){
+          console.log(event);
+          };
+
+        </script>
+    </body>
+</html>

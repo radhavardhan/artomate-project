@@ -140,6 +140,7 @@ class Projects(APIView):
                                         pro.project_code = code
                                         pro.username =kyc.fullname
                                         pro.route = project_title12
+
                                         pro.project_status=0
                                         pro.save()
                                         project_id = pro.id

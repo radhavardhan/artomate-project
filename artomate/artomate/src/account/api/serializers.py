@@ -218,7 +218,7 @@ class Const_SkillSerializer(serializers.ModelSerializer):
 class BidProjectSerializer(serializers.ModelSerializer):
     class Meta:
         model = Bidproject
-        fields = ('project_code', 'project_name', 'bid_amount', 'user_id', 'email','project_id','completion_time','descreption')
+        fields = ('project_code', 'project_name', 'bid_amount', 'user_id', 'email','project_id','completion_time','descreption','bid_status')
 
         def save(self):
             bids = Bidproject(

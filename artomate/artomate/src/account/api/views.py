@@ -1,7 +1,9 @@
 import uuid
 from django.contrib.auth.hashers import make_password
 from django.http import HttpResponse, JsonResponse, Http404
+from django.shortcuts import render
 from django.utils.translation import LANGUAGE_SESSION_KEY
+from requests import request
 from rest_framework import status
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.response import Response
@@ -215,6 +217,25 @@ class BudgetsDetails(APIView):
             data['min'] = budgets.min
             data['max'] = budgets.max
             return Response(data)
+
+class BudgetIDDetails(APIView):
+    def get(self, request, budget_id):
+        if request.method == 'GET':
+            # print(123)
+            mylist=[]
+            budgets = Budgets.objects.filter(budgettype_id=budget_id).values()
+            # print(budgets)
+            for i in budgets:
+                data={"min":i['min'],"max":i['max']}
+                mylist.append(data)
+
+            data1 = {}
+            data1['budgets'] = mylist
+            data1['total'] = len(mylist)
+            data1['message']="success"
+            data1['status']=100
+            return Response(data1)
+
 
 
 class UsernameValidation(APIView):
@@ -498,4 +519,8 @@ class Logout(APIView):
         user.save()
 
         return Response(status=status.HTTP_200_OK)
+
+class TestIndex(APIView):
+    def get(self,request):
+        return render(request, 'account/notification.html')
 

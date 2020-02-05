@@ -1,3 +1,4 @@
+from django.db.models import Sum
 from rest_framework.decorators import permission_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.status import (
@@ -10,6 +11,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from account.models import PostProject, Bidproject, Account,Hirer_bid_select,KycInfo,Userprofile,country
 from account.api.serializers import BidProjectSerializer,HirerSelectBidSerializer
+from django.db.models import Avg
 
 
 
@@ -120,17 +122,67 @@ class HirerProjects(APIView):
     permission_classes = (IsAuthenticated,)
 
     def get(self,request):
-        user=request.user
-        id=user.id
-        projects =PostProject.objects.filter(userid=id).values('id', 'project_title', 'description', 'min', 'max',
+        user = request.user
+        id = user.id
+        mylist = []
+        data1={}
+        projects = PostProject.objects.filter(userid=id).values('id', 'project_title', 'description', 'min', 'max',
                                                'username','created_at','route','project_deadline','custom_budget').order_by('created_at').reverse()
-        data={}
-        data['projects']=projects
-        data['total']=len(projects)
-        data['message']='success'
+        for i in projects:
+            bid = Bidproject.objects.filter(project_id=i['id']).values('no_of_bid').count()
+            averagebid = Bidproject.objects.filter(project_id=i['id']).values('bid_amount').aggregate(Avg('bid_amount'))
 
-        data['status']=100
-        return Response(data)
+            data = {"projects": i,   "bids": bid, "averagebid":averagebid}
+            mylist.append(data)
+        print(mylist)
+
+        if projects.exists():
+            data1['data'] = mylist
+            data1['total'] = len(mylist)
+            data1['message'] = 'success'
+            data1['status'] = 100
+            return Response(data1)
+        else:
+            data1['message'] = 'Not Found'
+            data1['status'] = 102
+            return Response(data1)
+
+# class HirerProjects(APIView):
+#     permission_classes = (IsAuthenticated,)
+#
+#     def get(self,request):
+#         user = request.user
+#         id = user.id
+#         mylist = []
+#         data={}
+#         data1={}
+#         projects = PostProject.objects.filter(userid=id).values('id', 'project_title', 'description', 'min', 'max',
+#                                                'username','created_at','route','project_deadline','custom_budget').order_by('created_at').reverse()
+#         if projects.exists():
+#
+#             for i in projects:
+#                 bidselected = Hirer_bid_select.objects.filter(project_id=i['id']).values()
+#                 if bidselected.exists():
+#                     for k in bidselected:
+#                         data['message']="freelancer selected"
+#                         data['details'] = k['freelancer_email_id']
+#                         data['status'] = 104
+#                         return Response(data)
+#                 else:
+#                     bid = Bidproject.objects.filter(project_id=i['id']).values('no_of_bid').count()
+#                     bidstatus = Bidproject.objects.filter(project_id=i['id']).values('bid_status')
+#                     averagebid = Bidproject.objects.filter(project_id=i['id']).values('bid_amount').aggregate(Avg('bid_amount'))
+#                     data = {"projects": i,   "bids": bid, "averagebid":averagebid}
+#                     mylist.append(data)
+#                 data1['data'] = mylist
+#                 data1['total'] = len(mylist)
+#                 data1['message'] = 'success'
+#                 data1['status'] = 100
+#                 return Response(data1)
+#         else:
+#             data1['message'] = 'Not Found'
+#             data1['status'] = 102
+#             return Response(data1)
 
 
 
@@ -148,13 +200,13 @@ class Bid_Details_Project(APIView):
         mylist=[]
         projects_posted = PostProject.objects.filter(route=projectroute).filter(userid=id).values('id', 'route', 'project_deadline','min', 'max')
         if projects_posted.exists():
-            print(projects_posted)
-            print("=============================")
+            # print(projects_posted)
+            # print("=============================")
 
             for i in projects_posted:
                 norofbid = Bidproject.objects.filter(project_id=i['id']).count()
                 biddeatils =Bidproject.objects.filter(project_id=i['id']).values('bid_amount','user_id','completion_time','email')
-                print(biddeatils)
+                # print(biddeatils)
                 for j in biddeatils:
                     userdetails =  Userprofile.objects.filter(user_id=j['user_id']).values('user_name',  'profile',  'country_id','hourely_rate')
                     for k in userdetails:
@@ -210,29 +262,59 @@ class No_Of_Bid(APIView):
 class Select_Bid(APIView):
     permission_classes = (IsAuthenticated,)
 
-    def get(self,request,projectid,userid):
-        if request.method=='GET':
+    def post(self,request):
+        if request.method=='POST':
             user =request.user
             useremail=user.email
-
+            projectroute =request.data['projectroute']
+            username = request.data['username']
+            bidstatus = request.data['bidstatus']
             data = {}
-            projectroute = PostProject.objects.filter(id=projectid).values()
+            projectroute123 = PostProject.objects.filter(route=projectroute).values()
 
-            userdetails = Userprofile.objects.filter(id=userid).values('user_name', 'designation', 'hourely_rate',
-                                                    'profile', 'user_id', 'country_id')
-            account = Account.objects.filter(id=userid).values()
-            print(projectroute)
-            for i in projectroute:
-                for j in account:
-                    details = Hirer_bid_select.objects.create( hirer_email_id=useremail,project_id=i['id'],project_route=i['route'],freelancer_email_id=j['email'])
-                    details.save()
+            account = Account.objects.filter(username=username).values()
+            if projectroute123.exists():
+                for j in projectroute123:
+                    bid = Bidproject.objects.filter(project_id=j['id']).values()
+                    for k in bid:
+                        if k['bid_status'] == "Accepted":
+                            data['message'] = "already selected freelancer for this project"
+                            data['status'] = 102
+                            return Response(data)
+                        else:
+                            for i in account:
+                                if bidstatus=='Accepted':
 
-            projectroute = PostProject.objects.get(id=projectid)
-            projectroute.project_status = 1
-            projectroute.save()
-            data['message'] = "success"
-            data['status'] = 100
-            return Response(data)
+                                        details = Hirer_bid_select.objects.create(hirer_email_id=useremail, project_id=j['id'],
+                                                                                  project_route=j['route'],
+                                                                                  freelancer_email_id=i['email'])
+                                        details.save()
+
+
+                                        bid = Bidproject.objects.filter(project_id=j['id']).filter(user_id=i['id']).values()
+                                        if bid.exists():
+                                            bid.update(bid_status=bidstatus)
+                                            projectroute345 = PostProject.objects.filter(route=projectroute).values()
+
+                                            projectroute345.update(project_status=1)
+                                        else:
+                                            data['message']="He has not bid for this project"
+                                            data['status']=102
+                                            return Response(data)
+                                else:
+                                    bid = Bidproject.objects.filter(project_id=j['id']).filter(user_id=i['id']).values()
+                                    bid.update(bid_status=bidstatus)
+                                    projectroute345 = PostProject.objects.filter(route=projectroute).values()
+
+                                    projectroute345.update(project_status=0)
+
+                    data['message'] = "success"
+                    data['status'] = 100
+                    return Response(data)
+            else:
+                data['message']="Not Found"
+                data['status']=102
+                return Response(data)
 
 
 
