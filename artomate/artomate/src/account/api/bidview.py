@@ -274,16 +274,24 @@ class Select_Bid(APIView):
 
             account = Account.objects.filter(username=username).values()
             if projectroute123.exists():
+                print(1)
                 for j in projectroute123:
+                    print(2)
                     bid = Bidproject.objects.filter(project_id=j['id']).values()
+                    print(bid)
                     for k in bid:
+                        print(k)
                         if k['bid_status'] == "Accepted":
+                            print(4)
                             data['message'] = "already selected freelancer for this project"
                             data['status'] = 102
                             return Response(data)
                         else:
+                            print(5)
                             for i in account:
+                                print(6)
                                 if bidstatus=='Accepted':
+                                        print(7)
 
                                         details = Hirer_bid_select.objects.create(hirer_email_id=useremail, project_id=j['id'],
                                                                                   project_route=j['route'],
@@ -293,15 +301,18 @@ class Select_Bid(APIView):
 
                                         bid = Bidproject.objects.filter(project_id=j['id']).filter(user_id=i['id']).values()
                                         if bid.exists():
+                                            print(8)
                                             bid.update(bid_status=bidstatus)
                                             projectroute345 = PostProject.objects.filter(route=projectroute).values()
 
                                             projectroute345.update(project_status=1)
                                         else:
+                                            print(10)
                                             data['message']="He has not bid for this project"
                                             data['status']=102
                                             return Response(data)
                                 else:
+                                    print(11)
                                     bid = Bidproject.objects.filter(project_id=j['id']).filter(user_id=i['id']).values()
                                     bid.update(bid_status=bidstatus)
                                     projectroute345 = PostProject.objects.filter(route=projectroute).values()
@@ -312,6 +323,7 @@ class Select_Bid(APIView):
                     data['status'] = 100
                     return Response(data)
             else:
+                print(12)
                 data['message']="Not Found"
                 data['status']=102
                 return Response(data)

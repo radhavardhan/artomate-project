@@ -196,14 +196,23 @@ class testlinkskill(APIView):
                 for var in items:
                     if var not in res:
                         res.append(var)
+            # print(res)
             for j in res:
+                print(j)
                 projectslist = PostProject.objects.filter(id=j['project_id']).values()
 
                 mylist.append(projectslist)
+        # print(mylist)
 
+        # for i in range(0, len(res)):
+        #     #
+        #     if i == (len(res) - 1):
+        #         print("The last element of list using loop : "
+        #               + str(res[i]))
 
-        list
-        list=len(mylist)-1
-
+        # list12=[]
+        # list12=len(res) - 1
+        # print(list12)
+        #
 
         return Response(mylist)
