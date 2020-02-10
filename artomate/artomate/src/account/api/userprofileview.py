@@ -357,6 +357,7 @@ class updateprofilepic(APIView):
         data = {}
         kyc = KycInfo.objects.filter(userid=user_id)
         if kyc.exists():
+
             if 'profile' in request.data:
                 photo = request.data['profile']
                 if not photo:
@@ -407,7 +408,7 @@ class addportfolio(APIView):
 
             imagefiles=request.FILES.getlist('project_images')
             imagelimit =len(imagefiles)
-            print(imagelimit)
+            print(imagefiles)
             if imagelimit>5:
                 data['message'] = "Cant upload more than 5 images"
                 data['status'] = 102
@@ -417,16 +418,17 @@ class addportfolio(APIView):
                 if serializer.is_valid():
                     portfolio = serializer.save()
                     portfolio.user_id = userid
-                    portfolio.save()
                     for i in imagefiles:
                         images=PortfolioImages.objects.create(image=i, userid=userid)
                         images.save()
+                    portfolio.save()
                     data['message'] = "success"
                     data['status'] = 100
+                    return Response(data)
                 else:
                     data['status'] = 0
                     data = serializer.errors
-                return Response(data)
+                    return Response(data)
 
 
 class getportfolio(APIView, ):

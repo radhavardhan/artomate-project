@@ -178,41 +178,42 @@ class TestFunctions(APIView):
         return JsonResponse(foo, safe=False)
 
 
-class testlinkskill(APIView):
+class ProjectMultipleSkill(APIView):
+
     def get(self, request,skill=None):
         mylist=[]
         mylist2=[]
         res = []
+        data={}
+
         skill_code=request.GET.get('skill')
-        # print(skill_code)
-        # print(skill_code.split('_'))
         skillseparate =skill_code.split('_')
-        # print(skillseparate)
         for i in skillseparate:
             project_id = Skills.objects.filter(skill_name=i).values('project_id')
-            # print(project_id)
             mylist2.append(project_id)
             for items in mylist2:
                 for var in items:
                     if var not in res:
                         res.append(var)
-            # print(res)
-            for j in res:
-                print(j)
-                projectslist = PostProject.objects.filter(id=j['project_id']).values()
-
-                mylist.append(projectslist)
+        # print(res)
+        # print("=========================")
+        for j in res:
+            projectslist = PostProject.objects.filter(id=j['project_id']).values()
+            mylist.append(projectslist)
         # print(mylist)
 
-        # for i in range(0, len(res)):
-        #     #
-        #     if i == (len(res) - 1):
-        #         print("The last element of list using loop : "
-        #               + str(res[i]))
+        if len(mylist)==0:
+            data['message'] = "Not Found"
+            data['status'] = 102
+            return Response(data)
+        else:
+            data['data'] = mylist
+            data['total'] = len(mylist)
+            data['message'] = "success"
+            data['status'] = 100
+            return Response(data)
 
-        # list12=[]
-        # list12=len(res) - 1
-        # print(list12)
-        #
 
-        return Response(mylist)
+class UserMultipleSkill(APIView):
+    pass
+

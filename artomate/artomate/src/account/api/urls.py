@@ -55,6 +55,8 @@ urlpatterns = [
              # Skill view
     path('skills', skillview.Const_Skill_Add.as_view()),
     path('skill_view', skillview.Skill_view.as_view()),
+    path('projects_on_multipleskill/', skillview.ProjectMultipleSkill.as_view()),
+    path('users_on_multipleskill/',skillview.UserMultipleSkill.as_view()),
     path('projects_on_skills/<str:skill_code>', skillview.ProjectOnSkill.as_view()),
     path('projects_on_skills2/<str:skill_code1>/<str:skill_code2>', skillview.ProjectOnSkill1.as_view()),
     path('projects_on_skills3', skillview.ProjectOnSkill13.as_view()),
@@ -90,6 +92,7 @@ urlpatterns = [
     path('freelancer/<str:username>', freelancerview.FreelancerView.as_view()),
     path('searchfreelanceronname',freelancerview.FilterFreelancerList.as_view()),
     path('searchfreelanceronskill',freelancerview.FilterFreelanerOnSkill.as_view()),
+    path('users_on_multipleskill/', freelancerview.UsersOnMultiplSkill.as_view()),
 
     path('filterfreelanceroncountry/<int:country_id>',freelancerview.FilterFreelancerOnCountry.as_view()),
     path('filterfreelanceronlang/<int:lang_id>',freelancerview.FreelancerOnLanguage.as_view()),
@@ -136,7 +139,7 @@ urlpatterns = [
 
     # Ticket
     # path('raiseticket',)
-    path('testlinkskill/', skillview.testlinkskill.as_view()),
+
 
 
 ]

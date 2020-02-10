@@ -441,3 +441,6 @@ class RecentlyCreatedUser(APIView):
             data1['message'] = "success"
             data1['status'] = 100
             return Response(data1)
+
+class UsersOnMultiplSkill(APIView):
+    pass

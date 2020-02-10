@@ -153,15 +153,14 @@ class PostProjectSerializer(serializers.ModelSerializer):
                 description=self.validated_data['description'],
                 files=self.validated_data['files'],
                 currency_id=self.validated_data['currencyid'],
-                budgetType_Id=self.validated_data['budgetTypeId'],
+                # budgetType_Id=self.validated_data['budgetTypeId'],
                 category_id=self.validated_data['category_id'],
                 subcategory_id=self.validated_data['subcategory_id'],
-                custom_budget=self.validated_data['custombudget'],
+                # custom_budget=self.validated_data['custombudget'],
                 project_deadline=self.validated_data['projectdeadline'],
                 experience_required=self.validated_data['experiencerequired'],
                 country_id=self.validated_data['country_id'],
-                min=self.validated_data['min'],
-                max=self.validated_data['max'],
+
             )
             return project
 

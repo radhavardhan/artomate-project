@@ -89,7 +89,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-MAX_IMAGE_SIZE="100"
+
 
 ROOT_URLCONF = 'mysite.urls'
 

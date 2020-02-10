@@ -276,12 +276,12 @@ class Select_Bid(APIView):
             if projectroute123.exists():
                 print(1)
                 for j in projectroute123:
-                    print(2)
-                    bid = Bidproject.objects.filter(project_id=j['id']).values()
-                    print(bid)
-                    for k in bid:
-                        print(k)
-                        if k['bid_status'] == "Accepted":
+                    if bidstatus == 'Accepted':
+                        bid = Bidproject.objects.filter(project_id=j['id']).filter(bid_status="Accepted").values()
+                        print(bid)
+
+                        print()
+                        if bid.exists():
                             print(4)
                             data['message'] = "already selected freelancer for this project"
                             data['status'] = 102
@@ -289,35 +289,36 @@ class Select_Bid(APIView):
                         else:
                             print(5)
                             for i in account:
-                                print(6)
-                                if bidstatus=='Accepted':
-                                        print(7)
+                                details = Hirer_bid_select.objects.create(hirer_email_id=useremail, project_id=j['id'],
+                                                                          project_route=j['route'],
+                                                                          freelancer_email_id=i['email'])
+                                details.save()
 
-                                        details = Hirer_bid_select.objects.create(hirer_email_id=useremail, project_id=j['id'],
-                                                                                  project_route=j['route'],
-                                                                                  freelancer_email_id=i['email'])
-                                        details.save()
-
-
-                                        bid = Bidproject.objects.filter(project_id=j['id']).filter(user_id=i['id']).values()
-                                        if bid.exists():
-                                            print(8)
-                                            bid.update(bid_status=bidstatus)
-                                            projectroute345 = PostProject.objects.filter(route=projectroute).values()
-
-                                            projectroute345.update(project_status=1)
-                                        else:
-                                            print(10)
-                                            data['message']="He has not bid for this project"
-                                            data['status']=102
-                                            return Response(data)
-                                else:
-                                    print(11)
-                                    bid = Bidproject.objects.filter(project_id=j['id']).filter(user_id=i['id']).values()
+                                bid = Bidproject.objects.filter(project_id=j['id']).filter(user_id=i['id']).values()
+                                if bid.exists():
+                                    print(8)
                                     bid.update(bid_status=bidstatus)
                                     projectroute345 = PostProject.objects.filter(route=projectroute).values()
+                                    projectroute345.update(project_status=1)
+                                else:
+                                    print(10)
+                                    data['message']="He has not bid for this project"
+                                    data['status']=102
+                                    return Response(data)
+                    else:
 
-                                    projectroute345.update(project_status=0)
+                        if bidstatus =='Rejected':
+                            for i in account:
+
+                                bid = Bidproject.objects.filter(project_id=j['id']).filter(user_id=i['id']).values()
+                                if bid.exists():
+                                    bid.update(bid_status=bidstatus)
+                                else:
+                                    data['message'] = "He has not bid for this project"
+                                    data['status'] = 102
+                                    return Response(data)
+
+
 
                     data['message'] = "success"
                     data['status'] = 100

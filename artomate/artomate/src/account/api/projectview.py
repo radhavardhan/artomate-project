@@ -12,7 +12,7 @@ from rest_framework.pagination import (
     PageNumberPagination,LimitOffsetPagination)
 
 from account.api.pagination import PostLimitOffsetPagination,PostPageNumberPagination
-from account.models import PostProject, Skills, Bidproject, Const_skills, Experiance, country, Currency, KycInfo,Categories
+from account.models import PostProject, Skills, Bidproject, Const_skills, Experiance, country, Currency, KycInfo,Categories,Budgets
 from account.api.serializers import PostProjectSerializer
 from django.http import HttpResponse, JsonResponse, Http404
 
@@ -114,6 +114,7 @@ class Projects(APIView):
             postproject1 = PostProject.objects.all()
             serializer = PostProjectSerializer(data=request.data)
             user_kyc = KycInfo.objects.filter(userid=user.id)
+
             if user_kyc.exists():
                 for kyc in user_kyc:
                     if kyc.kycstatus == 1:
@@ -140,7 +141,16 @@ class Projects(APIView):
                                         pro.project_code = code
                                         pro.username =kyc.fullname
                                         pro.route = project_title12
+                                        if 'custombudget' in request.data:
+                                            custum_bud = request.data['custombudget']
+                                            if not custum_bud:
+                                                budget_id = request.data['budgetType_Id']
+                                                budgets = Budgets.objects.get(id=budget_id)
+                                                pro.min = budgets.min
+                                                pro.max = budgets.max
 
+                                            else:
+                                                pro.custom_budget = custum_bud
                                         pro.project_status=0
                                         pro.save()
                                         project_id = pro.id
@@ -164,6 +174,16 @@ class Projects(APIView):
                                 cat1 = json.dumps(cat)
 
                                 pro.category_id = cat1
+                                if 'custombudget' in request.data:
+                                    custum_bud = request.data['custombudget']
+                                    if not custum_bud:
+                                        budget_id = request.data['budgetType_Id']
+                                        budgets = Budgets.objects.get(id=budget_id)
+                                        pro.min = budgets.min
+                                        pro.max = budgets.max
+
+                                    else:
+                                        pro.custom_budget = custum_bud
 
                                 pro.project_code = code
                                 pro.username = kyc.fullname
@@ -194,8 +214,22 @@ class Projects(APIView):
 
                                 pro.project_code = code
                                 pro.username =kyc.fullname
+                                pro.username =kyc.fullname
                                 pro.route = project_title2
                                 pro.project_status = 0
+
+                                if 'custombudget' in request.data:
+                                    custum_bud = request.data['custombudget']
+                                    if not custum_bud:
+                                        budget_id = request.data['budgetType_Id']
+                                        budgets = Budgets.objects.get(id=budget_id)
+                                        pro.min = budgets.min
+                                        pro.max = budgets.max
+
+                                    else:
+                                        pro.custom_budget = custum_bud
+
+
                                 pro.save()
 
                                 project_id = pro.id

@@ -162,7 +162,7 @@ class PostProject(models.Model):
     files = models.FileField(upload_to='', null=True)
     userid = models.IntegerField(default=None, null=True)
     username = models.CharField(max_length=50, default=None, null=True)
-    budgetType_Id = models.IntegerField(default=None)
+    budgetType_Id = models.IntegerField(default=None,null=True)
     currency_id = models.IntegerField(default=None)
     min = models.IntegerField(null=True)
     max = models.IntegerField(null=True)
