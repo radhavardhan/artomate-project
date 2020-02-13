@@ -234,7 +234,7 @@ class Projects(APIView):
 
                                 project_id = pro.id
                                 skillname = request.data['skills']
-                                # print(skillname)
+
                                 for i in skillname:
                                     post = Skills.objects.create(skill_id=i['id'], project_id=project_id, skill_name=i['name'])
                                     post.save()

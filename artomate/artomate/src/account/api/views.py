@@ -380,36 +380,73 @@ class FreelancerList(APIView):
                 return Response(data)
 
 class TestJson(APIView):
-    def post(self, request):
-        # if 'application/json' in request.META['CONTENT_TYPE']:
+    permission_classes = (IsAuthenticated,)
 
-        data1 = json.loads(request.body)
-        skillname = request.data['skills']
-        for i in skillname:
-            post = Json_data.objects.create()
-            post.skillcode = i['skill_name']
-            post.save()
-            print(i['skill_name'])
-        # myslist=
-        #     data
-        # for i in data1['skills']:
-        #     post = Json_data.objects.create()
-        #     post.skillcode = i['skill_name']
-        #     post.save()
+
+    def post(self,request):
+        employer=request.user
+        employerid=employer.id
+
+        # text = request.data['chattext']
+        freelancerid=12
+        data12=json.loads(request.body)
+        data1 = json.dumps(data12)
+        filepath ='/root/Homestead/artomate/artomate/src/chatfile/Emp' + str(employerid) + '_TO_Fre' + str(freelancerid) + '.json'
+
+        print(filepath)
+        # with open("/root/Homestead/artomate/artomate/src/chatfile/text12.txt","w") as f:
+        #    f.write(data1)
+        with open(filepath,"w") as f:
+            f.writelines(data1)
+
+
+
+        # def writetojsonfile(self,path,filename,data):
+        #     filepathnameext ='./'+path+'/'+filename+'.json'
+        #     with open(filepathnameext,'w') as fp:
+        #         json.dump(data,fp)
         #
-        #     print(i['skill_id'])
-        # print(list(data1))
+        #
+        #
+        #     path = '/root/Homestead/artomate/artomate/src/chatfile/'
+        #     filename='example'
+        #     data={}
+        #     data['project']='project'
+        #     data['hi']='hello'
+        #     self.writetojsonfile(path, filename, data)
+        #     result = writetojsonfile(path, filename, data)
+        return Response('done')
 
-        id = data1.get('id', None)
-        skill_code = data1.get('skill_name', None)
-        print(id)
-        print(skill_code)
+        # def post(self, request):
+        #     # if 'application/json' in request.META['CONTENT_TYPE']:
+        #
+        #     data1 = json.loads(request.body)
+        #     skillname = request.data['skills']
+        #     for i in skillname:
+        #         post = Json_data.objects.create()
+        #         post.skillcode = i['skill_name']
+        #         post.save()
+        #         print(i['skill_name'])
+        #     # myslist=
+        #     #     data
+        #     # for i in data1['skills']:
+        #     #     post = Json_data.objects.create()
+        #     #     post.skillcode = i['skill_name']
+        #     #     post.save()
+        #     #
+        #     #     print(i['skill_id'])
+        #     # print(list(data1))
+        #
+        #     id = data1.get('id', None)
+        #     skill_code = data1.get('skill_name', None)
+        #     print(id)
+        #     print(skill_code)
+        #
+        #     post = Json_data.objects.create(id=id)
+        #
+        #     post.skill_code = skill_code
 
-        post = Json_data.objects.create(id=id)
 
-        post.skill_code = skill_code
-
-        return HttpResponse('done')
 
 
 class Skill_view(APIView):

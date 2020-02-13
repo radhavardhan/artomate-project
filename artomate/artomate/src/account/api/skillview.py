@@ -8,6 +8,7 @@ from account.models import Const_skills, Skills, PostProject, Bidproject, User_S
 from account.api.serializers import Const_SkillSerializer
 from account.api import projectview
 from django.http import HttpResponse, JsonResponse, Http404
+import json
 
 
 class Skill_view(APIView):
@@ -184,7 +185,7 @@ class ProjectMultipleSkill(APIView):
         mylist=[]
         mylist2=[]
         res = []
-        data={}
+        data1={}
 
         skill_code=request.GET.get('skill')
         skillseparate =skill_code.split('_')
@@ -195,23 +196,31 @@ class ProjectMultipleSkill(APIView):
                 for var in items:
                     if var not in res:
                         res.append(var)
-        # print(res)
-        # print("=========================")
+
         for j in res:
-            projectslist = PostProject.objects.filter(id=j['project_id']).values()
-            mylist.append(projectslist)
-        # print(mylist)
+            projectslist = PostProject.objects.filter(id=j['project_id']).values('id', 'project_title', 'description', 'min', 'max',
+                                               'username','created_at','route','custom_budget','country_id')
+            for k in projectslist:
+
+
+                skills = Skills.objects.filter(project_id=k['id']).values('skill_name')
+                bid = Bidproject.objects.filter(project_id=k['id']).values('no_of_bid').count()
+                countryname = country.objects.filter(id=k['country_id']).values('country_name')
+                data = {"projects": k, "location": countryname, "skills": skills , "bids": bid}
+
+                mylist.append(data)
+
 
         if len(mylist)==0:
-            data['message'] = "Not Found"
-            data['status'] = 102
-            return Response(data)
+            data1['message'] = "Not Found"
+            data1['status'] = 102
+            return Response(data1)
         else:
-            data['data'] = mylist
-            data['total'] = len(mylist)
-            data['message'] = "success"
-            data['status'] = 100
-            return Response(data)
+            data1['data'] = mylist
+            data1['total'] = len(mylist)
+            data1['message'] = "success"
+            data1['status'] = 100
+            return Response(data1)
 
 
 class UserMultipleSkill(APIView):

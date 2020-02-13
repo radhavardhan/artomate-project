@@ -66,6 +66,7 @@ class Account(AbstractBaseUser):
     is_freelancer = models.IntegerField(default=False)
     bid = models.IntegerField(default=False)
     uuid = models.UUIDField(unique=True,default=uuid.uuid4)
+    profile =models.ImageField(upload_to='', default="yonghyun-lee-RhGK4qOwxxw-unsplash.jpg",validators=[FileExtensionValidator(['jpeg','png','gif'])])
     # phone = models.IntegerField(default=False)
 
     USERNAME_FIELD = 'email'
@@ -203,6 +204,7 @@ class UserPortfolioProfile(models.Model):
 
 class PortfolioImages(models.Model):
     image = models.ImageField(upload_to='')
+    project_id =models.IntegerField(default=None)
     userid = models.IntegerField(default=None)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

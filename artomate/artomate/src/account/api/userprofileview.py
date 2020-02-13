@@ -376,15 +376,13 @@ class updateprofilepic(APIView):
                         return Response(data)
 
                     else:
-                        userprofilepic = Userprofile.objects.get(user_id=user_id)
+
+                        userprofilepic = Account.objects.get(id=user_id)
                         userprofilepic.profile = photo
                         userprofilepic.save()
                         data['message'] = "success"
                         data['status'] = 100
                         return Response(data)
-
-
-
 
             else:
                 data['error'] = "profile required"
@@ -401,6 +399,7 @@ class addportfolio(APIView):
     permission_classes = (IsAuthenticated,)
 
     def post(self, request):
+        print(2345678)
         if request.method == 'POST':
             user = request.user
             userid = user.id
@@ -418,10 +417,11 @@ class addportfolio(APIView):
                 if serializer.is_valid():
                     portfolio = serializer.save()
                     portfolio.user_id = userid
-                    for i in imagefiles:
-                        images=PortfolioImages.objects.create(image=i, userid=userid)
-                        images.save()
                     portfolio.save()
+                    for i in imagefiles:
+                        images=PortfolioImages.objects.create(image=i, userid=userid, project_id=portfolio.id)
+                        images.save()
+
                     data['message'] = "success"
                     data['status'] = 100
                     return Response(data)
@@ -473,62 +473,35 @@ class ProfileVeiw(APIView):
 class ChangePassword(APIView):
     permission_classes = (IsAuthenticated,)
 
-    def _decode(self, encoded):
-        """
-        Split an encoded hash and return: (
-            algorithm, variety, version, time_cost, memory_cost,
-            parallelism, salt, data,
-        ).
-        """
-        bits = encoded.split('$')
-        print(bits)
-        if len(bits) == 5:
-            # Argon2 < 1.3
-            algorithm, variety, raw_params, salt, data = bits
-            version = 0x10
-
-        else:
-            print("hi")
-            assert len(bits) == 6
-            algorithm, variety, raw_version, raw_params, salt, data = bits
-            assert raw_version.startswith('v=')
-            version = int(raw_version[len('v='):])
-        params = dict(bit.split('=', 1) for bit in raw_params.split(','))
-        assert len(params) == 3 and all(x in params for x in ('t', 'm', 'p'))
-        time_cost = int(params['t'])
-        memory_cost = int(params['m'])
-        parallelism = int(params['p'])
-        return (
-            algorithm, variety, version, time_cost, memory_cost, parallelism,
-            salt, data,
-        )
-
     def post(self, request):
-        user=request.user
-        oldpwd = user.password
-        print(oldpwd)
-        oldpasswd = request.data['oldpassword']
-        print(oldpasswd)
-
-        class123 =Argon2PasswordHasher
-        print("2354354")
-        # old12 = self._decode(oldpwd)
-        # print(old12)
-        pwd1=  request.data['password']
-        newpwd=make_password(request.data['password'])
-        confirmpwd=request.data['confirmpwd']
+        user = request.user
         data={}
-        if pwd1 != confirmpwd:
-            data['message']='password : Passwords must match.'
-            data['sataus']=105
+        password = request.data['password']
+        email = request.data['email']
+        new_password = request.data['newpwd']
+        confirm_password = request.data['confirmpwd']
+
+        user = Account.objects.get(email=email)
+        if user.check_password(password):
+            if new_password != confirm_password:
+                data['message'] = 'password : Passwords must match.'
+                data['status'] = 105
+            else:
+                userpwd = Account.objects.filter(id=user.id).values()
+                for i in userpwd:
+                    i['password'] = new_password
+                    userpwd.update(password=i['password'])
+                data['message'] = "Password has been changed successfully"
+                data['status'] = 105
+
         else:
-            userpwd=Account.objects.filter(id=user.id).values()
-            for i in userpwd:
-                i['password']=newpwd
-                userpwd.update(password=i['password'])
-            data['message']='success'
-            data['status']=100
+            data['message'] = 'Invalid Old Password'
+            data['status'] = 105
         return Response(data)
+
+
+
+
 
 
 class LanguageView(APIView):

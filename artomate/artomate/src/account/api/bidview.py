@@ -129,12 +129,19 @@ class HirerProjects(APIView):
         projects = PostProject.objects.filter(userid=id).values('id', 'project_title', 'description', 'min', 'max',
                                                'username','created_at','route','project_deadline','custom_budget').order_by('created_at').reverse()
         for i in projects:
+            bidstatus = Bidproject.objects.filter(project_id=i['id']).filter(bid_status="Accepted").values( 'email', 'bid_amount', 'descreption')
+            # bidselected = Hirer_bid_select.objects.filter(project_id=i['id']).values('freelancer_email_id')
             bid = Bidproject.objects.filter(project_id=i['id']).values('no_of_bid').count()
+
             averagebid = Bidproject.objects.filter(project_id=i['id']).values('bid_amount').aggregate(Avg('bid_amount'))
 
-            data = {"projects": i,   "bids": bid, "averagebid":averagebid}
-            mylist.append(data)
-        print(mylist)
+            if bidstatus.exists():
+                data = {"projects": i,"freelancer_selected": bidstatus}
+                mylist.append(data)
+            else:
+                data ={"projects": i, "bids": bid, "averagebid": averagebid}
+                mylist.append(data)
+
 
         if projects.exists():
             data1['data'] = mylist
@@ -161,19 +168,13 @@ class HirerProjects(APIView):
 #         if projects.exists():
 #
 #             for i in projects:
-#                 bidselected = Hirer_bid_select.objects.filter(project_id=i['id']).values()
-#                 if bidselected.exists():
-#                     for k in bidselected:
-#                         data['message']="freelancer selected"
-#                         data['details'] = k['freelancer_email_id']
-#                         data['status'] = 104
-#                         return Response(data)
-#                 else:
-#                     bid = Bidproject.objects.filter(project_id=i['id']).values('no_of_bid').count()
-#                     bidstatus = Bidproject.objects.filter(project_id=i['id']).values('bid_status')
-#                     averagebid = Bidproject.objects.filter(project_id=i['id']).values('bid_amount').aggregate(Avg('bid_amount'))
-#                     data = {"projects": i,   "bids": bid, "averagebid":averagebid}
-#                     mylist.append(data)
+#                 bidselected = Hirer_bid_select.objects.filter(project_id=i['id']).values('freelancer_email_id')
+#
+#                 bid = Bidproject.objects.filter(project_id=i['id']).values('no_of_bid').count()
+#                 bidstatus = Bidproject.objects.filter(project_id=i['id']).values('bid_status')
+#                 averagebid = Bidproject.objects.filter(project_id=i['id']).values('bid_amount').aggregate(Avg('bid_amount'))
+#                 data = {"projects": i,   "bids": bid, "averagebid":averagebid,"freelancer selected":bidselected}
+#                 mylist.append(data)
 #                 data1['data'] = mylist
 #                 data1['total'] = len(mylist)
 #                 data1['message'] = 'success'
@@ -236,8 +237,6 @@ class No_Of_Bid(APIView):
         mylist = []
         biddetails = Bidproject.objects.filter(user_id=id).values('bid_amount', 'user_id', 'completion_time',
                                                                             'email', 'created_at','project_id')
-
-
         for var in biddetails:
             projectdetails = PostProject.objects.filter(id=var['project_id']).values('id', 'project_title', 'description', 'min', 'max',
                                                'username','created_at','route','project_deadline','custom_budget')
@@ -252,9 +251,8 @@ class No_Of_Bid(APIView):
 
         data1['data']=mylist
         data1['total']=len(mylist)
-
-
         return Response(data1)
+
 
 
 
@@ -262,72 +260,46 @@ class No_Of_Bid(APIView):
 class Select_Bid(APIView):
     permission_classes = (IsAuthenticated,)
 
-    def post(self,request):
-        if request.method=='POST':
-            user =request.user
-            useremail=user.email
-            projectroute =request.data['projectroute']
+    def post(self, request):
+        if request.method == 'POST':
+            user = request.user
+            useremail = user.email
+            projectroute = request.data['projectroute']
             username = request.data['username']
             bidstatus = request.data['bidstatus']
             data = {}
-            projectroute123 = PostProject.objects.filter(route=projectroute).values()
-
+            projectroute123 = PostProject.objects.filter(route=projectroute).filter(userid=user.id).values()
             account = Account.objects.filter(username=username).values()
             if projectroute123.exists():
-                print(1)
                 for j in projectroute123:
-                    if bidstatus == 'Accepted':
-                        bid = Bidproject.objects.filter(project_id=j['id']).filter(bid_status="Accepted").values()
-                        print(bid)
-
-                        print()
+                    for i in account:
+                        bid = Bidproject.objects.filter(project_id=j['id']).filter(user_id=i['id']).values()
                         if bid.exists():
-                            print(4)
-                            data['message'] = "already selected freelancer for this project"
-                            data['status'] = 102
-                            return Response(data)
+                            biduser = Bidproject.objects.filter(project_id=j['id']).filter(bid_status="Accepted").values()
+                            if biduser.exists():
+                                data['message'] = 'Already freelancer selected'
+                                data['status'] = 103
+                                return Response(data)
+                            else:
+                                bid.update(bid_status=bidstatus)
+                                projectroute345 = PostProject.objects.filter(route=projectroute).values()
+                                projectroute345.update(project_status=1)
+                                data['message'] = 'success'
+                                data['status'] = 100
+                                return Response(data)
                         else:
-                            print(5)
-                            for i in account:
-                                details = Hirer_bid_select.objects.create(hirer_email_id=useremail, project_id=j['id'],
-                                                                          project_route=j['route'],
-                                                                          freelancer_email_id=i['email'])
-                                details.save()
-
-                                bid = Bidproject.objects.filter(project_id=j['id']).filter(user_id=i['id']).values()
-                                if bid.exists():
-                                    print(8)
-                                    bid.update(bid_status=bidstatus)
-                                    projectroute345 = PostProject.objects.filter(route=projectroute).values()
-                                    projectroute345.update(project_status=1)
-                                else:
-                                    print(10)
-                                    data['message']="He has not bid for this project"
-                                    data['status']=102
-                                    return Response(data)
-                    else:
-
-                        if bidstatus =='Rejected':
-                            for i in account:
-
-                                bid = Bidproject.objects.filter(project_id=j['id']).filter(user_id=i['id']).values()
-                                if bid.exists():
-                                    bid.update(bid_status=bidstatus)
-                                else:
-                                    data['message'] = "He has not bid for this project"
-                                    data['status'] = 102
-                                    return Response(data)
-
-
-
-                    data['message'] = "success"
-                    data['status'] = 100
-                    return Response(data)
+                            data['message'] = 'He has not bid for this project'
+                            data['status'] = 103
+                            return Response(data)
             else:
-                print(12)
-                data['message']="Not Found"
-                data['status']=102
+                data['message']='Cant select'
+                data['status']=106
                 return Response(data)
+
+
+
+
+
 
 
 

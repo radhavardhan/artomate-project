@@ -34,7 +34,7 @@ class RegistrationSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Account
-        fields = ['email', 'username', 'password', 'password2','bid']
+        fields = ['email', 'username', 'password', 'password2','bid','profile']
         extra_kwargs = {
             'password': {'write_only': True},
         }
@@ -301,9 +301,7 @@ class RaiseTicketSerializer(serializers.ModelSerializer):
 
         def save(self):
             ticket = RaiseTicket(
-
                 tickettype=self.Validated_data['tickettype'],
                 description=self.Validated_data['description'],
-
             )
             return ticket
