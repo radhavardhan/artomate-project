@@ -92,7 +92,6 @@ urlpatterns = [
     path('freelancer/<str:username>', freelancerview.FreelancerView.as_view()),
     path('searchfreelanceronname',freelancerview.FilterFreelancerList.as_view()),
     path('searchfreelanceronskill',freelancerview.FilterFreelanerOnSkill.as_view()),
-    path('users_on_multipleskill/', freelancerview.UsersOnMultiplSkill.as_view()),
 
     path('filterfreelanceroncountry/<int:country_id>',freelancerview.FilterFreelancerOnCountry.as_view()),
     path('filterfreelanceronlang/<int:lang_id>',freelancerview.FreelancerOnLanguage.as_view()),
@@ -132,6 +131,8 @@ urlpatterns = [
 
 
     path('selectbid',bidview.Select_Bid.as_view()),
+    path('chatreply',bidview.ChatReply.as_view()),
+    path('chatview',bidview.ChatView.as_view()),
 
     path('testjson', views.TestJson.as_view()),
 

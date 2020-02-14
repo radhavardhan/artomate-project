@@ -59,8 +59,6 @@ class AllProjects(APIView):
             data['message']="Not Found"
             data['status']=102
             return Response(data)
-    #     data = Proj.projects(request)
-    #     return Response(data, safe=False)
 
 
 
@@ -114,7 +112,6 @@ class Projects(APIView):
             postproject1 = PostProject.objects.all()
             serializer = PostProjectSerializer(data=request.data)
             user_kyc = KycInfo.objects.filter(userid=user.id)
-
             if user_kyc.exists():
                 for kyc in user_kyc:
                     if kyc.kycstatus == 1:
@@ -128,7 +125,6 @@ class Projects(APIView):
                     elif kyc.kycstatus == 3:
                         if postproject1.exists():
                             for var in postproject1:
-
                                 if var.project_title == string1:
                                     # print("executing this 2")
                                     project_title12 = project_title1
@@ -163,10 +159,7 @@ class Projects(APIView):
                                     else:
                                         data = serializer.errors
                                     return Response(data)
-
-                            # print("executing this 3")
                             project_title2 = project
-                            # print(project_title2)
                             if serializer.is_valid():
                                 pro = serializer.save()
                                 pro.userid = user.id

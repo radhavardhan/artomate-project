@@ -70,7 +70,7 @@ class FilterFreelancerList(APIView):
 
                     for j in user:
                         data = {
-                            "fullname": i['fullname'],
+                            "fullname":  KycInfo.objects.filter(userid=j['user_id']).values('fullname'),
                             "freelancer": j,
                             "location": country.objects.filter(id=j['country_id']).values('country_name'),
                             "ratings": 4,
@@ -442,5 +442,3 @@ class RecentlyCreatedUser(APIView):
             data1['status'] = 100
             return Response(data1)
 
-class UsersOnMultiplSkill(APIView):
-    pass

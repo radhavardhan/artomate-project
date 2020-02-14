@@ -12,6 +12,9 @@ from rest_framework.response import Response
 from account.models import PostProject, Bidproject, Account,Hirer_bid_select,KycInfo,Userprofile,country
 from account.api.serializers import BidProjectSerializer,HirerSelectBidSerializer
 from django.db.models import Avg
+import json
+
+from django.http import HttpResponse, JsonResponse, Http404
 
 
 
@@ -262,14 +265,14 @@ class Select_Bid(APIView):
 
     def post(self, request):
         if request.method == 'POST':
-            user = request.user
-            useremail = user.email
+            employer = request.user
+            employerid = employer.id
             projectroute = request.data['projectroute']
-            username = request.data['username']
+            freelancername = request.data['username']
             bidstatus = request.data['bidstatus']
             data = {}
-            projectroute123 = PostProject.objects.filter(route=projectroute).filter(userid=user.id).values()
-            account = Account.objects.filter(username=username).values()
+            projectroute123 = PostProject.objects.filter(route=projectroute).filter(userid=employer.id).values()
+            account = Account.objects.filter(username=freelancername).values()
             if projectroute123.exists():
                 for j in projectroute123:
                     for i in account:
@@ -281,12 +284,27 @@ class Select_Bid(APIView):
                                 data['status'] = 103
                                 return Response(data)
                             else:
-                                bid.update(bid_status=bidstatus)
-                                projectroute345 = PostProject.objects.filter(route=projectroute).values()
-                                projectroute345.update(project_status=1)
-                                data['message'] = 'success'
-                                data['status'] = 100
-                                return Response(data)
+
+                                    bid.update(bid_status=bidstatus)
+                                    projectroute345 = PostProject.objects.filter(route=projectroute).values()
+                                    projectroute345.update(project_status=1)
+
+
+                                    for i in account:
+                                        freelancer_details = {
+                                            "freelancer_id":i['id'],
+                                            "freelancer_name":i['username'],
+                                            "freelancer_email":i['email']
+                                        }
+                                        textdata=json.dumps(freelancer_details)
+
+                                        print(textdata)
+                                    filepath = '/root/Homestead/artomate/artomate/src/chatfile/Emp' + str(employerid) + '_TO_Fre' + str(i['id']) + '.json'
+                                    with open(filepath, "w") as f:
+                                        f.writelines(textdata)
+                                    data['message'] = 'success'
+                                    data['status'] = 100
+                                    return Response(data)
                         else:
                             data['message'] = 'He has not bid for this project'
                             data['status'] = 103
@@ -295,6 +313,35 @@ class Select_Bid(APIView):
                 data['message']='Cant select'
                 data['status']=106
                 return Response(data)
+
+
+class ChatView(APIView):
+    def get(self,request):
+        # filepath=Emp2_TO_Fre4.json'
+        with open('/root/Homestead/artomate/artomate/src/chatfile/Emp2_TO_Fre4.json', "r") as f:
+            data=json.load(f)
+            # print(data)
+
+        return Response(data)
+
+
+class ChatReply(APIView):
+    # permission_classes = (IsAuthenticated,)
+
+    def post(self,request):
+        datatext =request.data
+
+
+
+
+        with open('/root/Homestead/artomate/artomate/src/chatfile/Emp2_TO_Fre4.json', "a") as f:
+            f.writelines(json.dumps(datatext))
+        return Response("done")
+
+
+
+
+
 
 
 
