@@ -155,6 +155,7 @@ class Projects(APIView):
                                             post = Skills.objects.create(skill_id=i['id'], project_id=project_id,
                                                                          skill_name=i['name'])
                                             post.save()
+
                                         data['result'] = 'success'
                                     else:
                                         data = serializer.errors

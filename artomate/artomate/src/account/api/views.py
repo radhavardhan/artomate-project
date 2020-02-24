@@ -1,6 +1,6 @@
 import os
 import uuid
-from os import mkdir
+from os import mkdir, chdir
 
 from django.contrib.auth.hashers import make_password
 from django.http import HttpResponse, JsonResponse, Http404
@@ -158,24 +158,28 @@ class DashboardView(APIView):
     permission_classes = (IsAuthenticated,)
 
     def get(self, request):
+        data = {}
         user = request.user
         name = user.username
         id = user.id
         totalbid = Bidproject.objects.filter(user_id=id).aggregate(Sum('bid_amount'))
         kyc_status = KycInfo.objects.filter(userid=user.id)
-        data = {}
+        profilepic = Account.objects.filter(id=id).values('profile')
+        for i in profilepic:
+            data['profile'] = i['profile']
+
         data['user_name'] = name
-        data['email']=request.user.email
+        data['email'] = request.user.email
         for e in Account.objects.filter(id=id).values('bid'):
             data['Bids'] = e['bid']
-        data['Reviews'] = 2
-        data['Completed_jobs'] = 2
+        data['no_of_bids'] = Bidproject.objects.filter(user_id=id).count()
+        data['jobs_posted'] = PostProject.objects.filter(userid=id).count()
         data['Monthly_Earnings'] = totalbid
         if kyc_status.exists():
             for var in kyc_status:
                 data['kyc_status'] = var.kycstatus
         else:
-                data['kyc_status'] = 0
+            data['kyc_status'] = 0
         return JsonResponse(data)
 
 
@@ -381,41 +385,6 @@ class FreelancerList(APIView):
                 data['message'] = "Not Found"
                 data['status'] = 102
                 return Response(data)
-
-class TestJson(APIView):
-    permission_classes = (IsAuthenticated,)
-
-
-    def post(self,request):
-        employer=request.user
-        employerid=employer.id
-
-        # text = request.data['chattext']
-        freelancerid=12
-        data12=json.loads(request.body)
-        data1 = json.dumps(data12)
-
-
-        folder = mkdir('Emp'+str(employerid) + '_TO_Fre' + str(freelancerid))
-
-
-        filepath ='/root/Homestead/artomate/artomate/src/chatfile/'+folder+'/Emp'+ str(employerid) + '_TO_Fre' + str(freelancerid) + '.json'
-
-
-
-        with open(filepath,"w") as f:
-            f.writelines(data1)
-
-
-
-        # def writetojsonfile(self,path,filename,data):
-        #     filepathnameext ='./'+path+'/'+filename+'.json'
-        #     with open(filepathnameext,'w') as fp:
-        #         json.dump(data,fp)
-        #
-        #
-
-        return Response('done')
 
 
 

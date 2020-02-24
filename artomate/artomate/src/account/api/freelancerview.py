@@ -47,7 +47,7 @@ class FreelancerView(APIView):
             return Response(data)
 
 
-class FilterFreelancerList(APIView):
+class SearchFreelancerName(APIView):
     def post(self, request):
         data1 = {}
         data = {}
@@ -103,7 +103,7 @@ class FreelancerList(APIView):
                     fullname = KycInfo.objects.filter(userid=i['user_id']).values('fullname')
 
                     data = {
-                        "fullname":fullname,
+                        "fullname": KycInfo.objects.filter(userid=i['user_id']).values('fullname'),
                         "freelancer": i,
                         "location": country.objects.filter(id=i['country_id']).values('country_name'),
                         "ratings": 4,
@@ -117,7 +117,7 @@ class FreelancerList(APIView):
                 data['status'] = 102
                 return Response(data)
 
-class FilterFreelanerOnSkill(APIView):
+class SearchFreelanerOnSkill(APIView):
 
 
     def post(self,request):
@@ -161,7 +161,7 @@ class FilterFreelanerOnSkill(APIView):
 
                                     for i in results:
                                         data = {
-                                            "fullname": k['fullname'],
+                                            "fullname": KycInfo.objects.filter(userid=i['user_id']).values('fullname'),
                                             "freelancer": i,
                                             "location": country.objects.filter(id=i['country_id']).values(
                                                 'country_name'),

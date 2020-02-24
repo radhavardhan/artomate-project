@@ -9,7 +9,7 @@ from account.api.views import (
 )
 from rest_framework_simplejwt.views import TokenObtainPairView,TokenRefreshView
 
-from account.api import views, KycView,projectview,skillview,categoryview,bidview,send_otp,userprofileview,ticketview,freelancerview
+from account.api import views, KycView,projectview,skillview,categoryview,bidview,send_otp,userprofileview,ticketview,freelancerview,chatview
 
 app_name = 'account'
 
@@ -90,8 +90,8 @@ urlpatterns = [
             # freelancer view
     path('allfreelancer',freelancerview.FreelancerList.as_view()),
     path('freelancer/<str:username>', freelancerview.FreelancerView.as_view()),
-    path('searchfreelanceronname',freelancerview.FilterFreelancerList.as_view()),
-    path('searchfreelanceronskill',freelancerview.FilterFreelanerOnSkill.as_view()),
+    path('searchfreelanceronname',freelancerview.SearchFreelancerName.as_view()),
+    path('searchfreelanceronskill',freelancerview.SearchFreelanerOnSkill.as_view()),
 
     path('filterfreelanceroncountry/<int:country_id>',freelancerview.FilterFreelancerOnCountry.as_view()),
     path('filterfreelanceronlang/<int:lang_id>',freelancerview.FreelancerOnLanguage.as_view()),
@@ -131,10 +131,10 @@ urlpatterns = [
 
 
     path('selectbid',bidview.Select_Bid.as_view()),
-    path('chatreply',bidview.ChatReply.as_view()),
-    path('chatview',bidview.ChatView.as_view()),
+    path('chatreply/<str:projectroute>',chatview.ChatReply.as_view()),
+    path('chatview',chatview.ChatView.as_view()),
 
-    path('testjson', views.TestJson.as_view()),
+    path('testjson', chatview.TestJson.as_view()),
 
     # url(r'^projects_on_skills/(?P<skill_code>\w+)$', views.ProjectOnSkill1.as_view()),
 
