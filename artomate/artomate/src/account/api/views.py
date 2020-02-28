@@ -80,7 +80,22 @@ def registration_view(request):
             account.is_freelancer = 1
             account.bid = 5
             account.save()
-            data['response'] = 'Successfully registered'
+            # EMAIL VERIFICATION
+            # current_site = get_current_site(request)
+            # html_content = render_to_string('acc_active_email.html',
+            #                                 {'user': account, 'domain': current_site.domain,
+            #                                  'uid': urlsafe_base64_encode(force_bytes(account.pk)),
+            #                                  'token': account_activation_token.make_token(account),
+            #                                  })
+            # email = EmailMultiAlternatives('Confirm your Artomate Account')
+            # email.attach_alternative(html_content, "text/html")
+            # email.to = [request.data['email']]
+            # email.send()
+
+            data['response'] = 'successfully registered new user and ' \
+                               'Please confirm your email address to complete the registration '
+            data['status'] = 100
+
         else:
             data = serializer.errors
         return Response(data)
@@ -94,10 +109,39 @@ def registration_view(request):
             account.is_freelancer = 0
             account.bid = 5
             account.save()
-            data['response'] = 'Successfully registered'
+            # # EMAIL VERIFICATION
+            # current_site = get_current_site(request)
+            # html_content = render_to_string('acc_active_email.html',
+            #                                 {'user': account, 'domain': current_site.domain,
+            #                                  'uid': urlsafe_base64_encode(force_bytes(account.pk)),
+            #                                  'token': account_activation_token.make_token(account),
+            #                                  })
+            # email = EmailMultiAlternatives('Confirm your Artomate Account')
+            # email.attach_alternative(html_content, "text/html")
+            # email.to = [request.data['email']]
+            # email.send()
+
+            data['response'] = 'successfully registered new user and ' \
+                               'Please confirm your email address to complete the registration '
+            data['status'] = 100
         else:
             data = serializer.errors
         return Response(data)
+
+
+# def activate(request, uidb64, token):
+#     try:
+#         print("this is activate method")
+#         uid = force_text(urlsafe_base64_decode(uidb64))
+#         account = Account.objects.get(pk=uid)
+#     except(TypeError, ValueError, OverflowError, Account.DoesNotExist):
+#         account = None
+#     if account is not None and account_activation_token.check_token(account, token):
+#         account.is_active = True
+#         account.save()
+#         return render(request, 'login.html')
+#     else:
+#         return HttpResponse('Activation link is invalid!')
 
 
 def jwt_payload_handler(user):

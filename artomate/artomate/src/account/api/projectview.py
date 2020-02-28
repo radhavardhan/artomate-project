@@ -61,39 +61,85 @@ class AllProjects(APIView):
             return Response(data)
 
 
-
-
 class SingleJob(AllProjects):
 
-    def get(self, request ,projectroute):
-        singlejob=PostProject.objects.filter(route=projectroute)
-        data={}
-        for var in singlejob:
-            skills = Skills.objects.filter(project_id=var.id).values('skill_name','skill_id')
-            data['project_name']=var.project_title
-            data['projetc_route']=var.route
-            data['descreption'] = var.description
-            data['username'] = var.username
-            data['min'] = var.min
-            data['max']=var.max
-            data['project_deadline'] = var.project_deadline
-            exp = Experiance.objects.filter(id=var.experience_required).values('Exp_name')
-            data['experienced_required'] = exp
-            countryname=country.objects.filter(id=var.country_id).values('country_name')
-            data['country']=countryname
-            courrencytype = Currency.objects.filter(id=var.currency_id).values('currency_type')
-            data['currency']=courrencytype
-            data['skills'] = skills
-            data['custombudget']=var.custom_budget
-            biddeatils = Bidproject.objects.filter(project_id=var.id).values('bid_amount', 'user_id',
-                                                                              'completion_time', 'email')
-            norofbid = Bidproject.objects.filter(project_id=var.id).count()
-            data['no_of_bid'] = norofbid
-            data['bid details'] = biddeatils
-            data['message']="success"
-            data['status']=101
-        return Response(data)
+    def get(self, request, projectroute):
+        singlejob = PostProject.objects.filter(route=projectroute)
 
+        data = {}
+        mylist = []
+        data1 = {}
+        data2 = {}
+        if singlejob.exists():
+            for var in singlejob:
+
+                skills = Skills.objects.filter(project_id=var.id).values('skill_name', 'skill_id')
+                exp = Experiance.objects.filter(id=var.experience_required).values('Exp_name')
+                countryname = country.objects.filter(id=var.country_id).values('country_name')
+                biddeatils = Bidproject.objects.filter(project_id=var.id).values('bid_amount', 'user_id',
+                                                                                 'completion_time', 'email')
+                norofbid = Bidproject.objects.filter(project_id=var.id).count()
+                courrencytype = Currency.objects.filter(id=var.currency_id).values('currency_type')
+
+                data = {'project_name': var.project_title,
+                        'projetc_route': var.route,
+                        'project_code': var.project_code,
+                        'descreption': var.description,
+                        'username': var.username,
+                        'min': var.min,
+                        'max': var.max,
+                        'project_deadline': var.project_deadline,
+                        'experienced_required': exp,
+                        'country': countryname,
+                        'currency': courrencytype,
+                        'skills': skills,
+                        'custombudget': var.custom_budget,
+                        'no_of_bid': norofbid,
+                        'bid details': biddeatils
+                        }
+
+                for i in skills:
+                    skillpro = Skills.objects.filter(skill_name=i['skill_name']).exclude(project_id=var.id).values(
+                        'project_id')
+                    if skillpro.exists():
+                        for j in skillpro:
+                            projectdetails = PostProject.objects.filter(id=j['project_id']).values('id',
+                                                                                                   'project_title',
+                                                                                                   'min', 'max',
+                                                                                                   'project_deadline',
+                                                                                                   'custom_budget',
+                                                                                                   'experience_required',
+                                                                                                   'currency_id',
+                                                                                                   'country_id').order_by(
+                                'created_at').reverse()
+                            for k in projectdetails:
+                                skills = Skills.objects.filter(project_id=k['id']).values('skill_name', 'skill_id')
+
+                                data2 = {
+                                    'id': k['id'],
+                                    'project_name': k['project_title'],
+                                    'min': k['min'],
+                                    'max': k['max'],
+                                    'project_deadline': k['project_deadline'],
+                                    'custombudget': k['custom_budget'],
+                                }
+                                mylist.append(data2)
+
+                        data1['data'] = data
+                        data1['data2'] = mylist[:2]
+                        data1['message'] = "success"
+                        data1['status'] = 101
+
+                        return Response(data1)
+                else:
+                    data['message'] = "Not Found"
+                    data['status'] = 102
+                    return Response(data)
+
+        else:
+            data['message'] = "Not Found"
+            data['status'] = 103
+            return Response(data)
 
 
 class Projects(APIView):

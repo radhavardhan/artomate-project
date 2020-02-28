@@ -1,6 +1,27 @@
 {% autoescape off %}
-Hi {{ user.username }},
-Please click on the link to confirm your registration,
-
-http://{{ domain }}{% url 'activate' uidb64=uid token=token %}
+<html>
+<head>
+  <title> Email Confirmation Page </title>
+    <style>
+         .button {
+         background-color: #1c87c9;
+         border: none;
+         color: white;
+         padding: 10px 14px;
+         text-align: center;
+         text-decoration: none;
+         display: inline-block;
+         font-size: 15px;
+         margin: 2px 1px;
+         cursor: pointer;
+         }
+      </style>
+</head>
+<body>
+    Hi {{ user.username }},
+    <p>Welcome to Artomate, You are one step away from confirming your Artomate Account</p>
+        <p>Please click the button to confirm your registration</p>
+     <a href="http://{{ domain }}{% url 'activate' uidb64=uid token=token %}" class="button">Click Here</a>
 {% endautoescape %}
+</body>
+</html>
